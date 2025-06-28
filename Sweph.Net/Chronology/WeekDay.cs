@@ -1,4 +1,4 @@
-﻿namespace Sweph.Net;
+﻿namespace Sweph.Net.Chronology;
 
 /// <summary>
 /// Represents the days of the week.
