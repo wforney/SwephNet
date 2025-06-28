@@ -1,0 +1,80 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageProjectUrl>https://github.com/wforney/SwephNet</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReleaseNotes>### Current development
+ - Add a new .NET 9 project and migrate
+
+#### Upstream
+  - [#1](https://github.com/ygrenier/SwephNet/pull/1) : AppVeyor integration
+ 
+[Commits](https://github.com/ygrenier/SwephNet/compare/v2.0.0...master)
+
+### v2.0.0 - 2014-06-06
+#### Initial commit after split
+
+We can't retreive the history from the original SwissEphNet project, so we restart. You
+can look the history from (https://github.com/ygrenier/SwissEphNet).
+</PackageReleaseNotes>
+    <RepositoryUrl>https://github.com/wforney/SwephNet.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>Swiss;Ephemeris;SwephNet</PackageTags>
+    <IncludeSymbols>True</IncludeSymbols>
+    <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <AnalysisLevel>latest-all</AnalysisLevel>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+    <Copyright>Copyright (C) 1997 - 2008 Astrodienst AG, Switzerland.  All rights reserved.</Copyright>
+    <Description>This project is an Astrodienst Swiss Ephemeris (http://www.astro.com/swisseph/) .Net version for cross platform usage.
+
+It is a rewrite of the (https://github.com/ygrenier/SwissEphNet) project with the .Net guidelines, so it's an .Net optimization of the SwissEphNet project but with a different interface.</Description>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <AssemblyVersion>2.0.0.0</AssemblyVersion>
+    <FileVersion>2.0.0.0</FileVersion>
+    <Title>Astrodienst Swiss Ephemeris for .NET</Title>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <IsAotCompatible>True</IsAotCompatible>
+    <WarningLevel>9999</WarningLevel>
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <IsAotCompatible>True</IsAotCompatible>
+    <WarningLevel>9999</WarningLevel>
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="System.Diagnostics.CodeAnalysis" />
+  </ItemGroup>
+
+</Project>
