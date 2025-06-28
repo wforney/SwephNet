@@ -182,19 +182,3 @@ public readonly record struct Longitude
             : new Longitude(value);
     }
 }
-
-/// <summary>
-/// Longitude polarity
-/// </summary>
-public enum LongitudePolarity
-{
-    /// <summary>
-    /// East (Positive)
-    /// </summary>
-    East,
-
-    /// <summary>
-    /// West (Negative)
-    /// </summary>
-    West
-}
