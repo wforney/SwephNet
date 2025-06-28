@@ -1,8 +1,7 @@
-﻿using Sweph.Net.Chronology;
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text;
 
-namespace Sweph.Net;
+namespace Sweph.Net.Chronology;
 
 /// <summary>
 /// Represents a date and time in Universal Time (UT).
@@ -141,7 +140,7 @@ public readonly record struct UniversalTime : IComparable, IComparable<Universal
                     while (i < fl && format[i] == 'd') { cnt++; i++; }
                     i--;
                     double jd = JulianDay.FromUniversalTime(this);
-                    int nd = ((int)JulianDay.DayOfWeek(jd)) + 1;
+                    int nd = (int)JulianDay.DayOfWeek(jd) + 1;
                     if (nd >= 7)
                     {
                         nd -= 7;

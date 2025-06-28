@@ -8,7 +8,7 @@ namespace Sweph.Net.Services;
 /// <summary>
 /// Provides file loading functionality for the Swiss Ephemeris library.
 /// </summary>
-internal partial class FileService
+internal sealed partial class FileService
 {
     /// <summary>
     /// Get delta t records as an asynchronous operation.

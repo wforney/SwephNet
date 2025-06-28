@@ -9,12 +9,12 @@ public readonly record struct DeltaT(int Year, double Value)
 {
     /// <summary> for delta t: intrinsic tidal acceleration in the mean motion of the moon, not
     /// given in the parameters list of the ephemeris files but computed by
-    /// Chapront/Chapront-Touzé/Francou A&A 387 (2002), p. 705. </summary>
+    /// Chapront/Chapront-Touzé/Francou A&amp;A 387 (2002), p. 705. </summary>
     public const double Tidal26 = -26.0;
 
     /// <summary> for delta t: intrinsic tidal acceleration in the mean motion of the moon, not
     /// given in the parameters list of the ephemeris files but computed by
-    /// Chapront/Chapront-Touzé/Francou A&A 387 (2002), p. 705. </summary>
+    /// Chapront/Chapront-Touzé/Francou A&amp;A 387 (2002), p. 705. </summary>
     public const double TidalDE200 = -23.8946;
 
     /// <summary>
