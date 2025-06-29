@@ -1,4 +1,5 @@
 ﻿using Sweph.Net.Chronology;
+using Sweph.Net.Geography;
 using System.Globalization;
 
 namespace Sweph.Net.Houses;
@@ -6,7 +7,7 @@ namespace Sweph.Net.Houses;
 /// <summary>
 /// Represents the context for house calculations, providing methods to retrieve house system names,
 /// </summary>
-public class HouseContext
+public sealed class HouseContext
 {
     /// <summary>
     /// Returns the name of an house system

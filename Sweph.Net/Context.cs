@@ -1,4 +1,7 @@
-﻿using Sweph.Net.Chronology;
+﻿using Microsoft.Extensions.Options;
+using Sweph.Net.Chronology;
+using Sweph.Net.Houses;
+using Sweph.Net.Planets;
 
 namespace Sweph.Net;
 
@@ -6,7 +9,11 @@ namespace Sweph.Net;
 /// Represents a context for accessing resources or services. Implements the <see cref="IDisposable"/>.
 /// </summary>
 /// <seealso cref="IDisposable"/>
-public class Context : IDisposable
+public class Context(
+    HouseContext houseContext,
+    PlanetContext planetContext,
+    IOptionsMonitor<SwephNetSettings> swephNetSettingsOptionsMonitor)
+    : IDisposable
 {
     /// <summary>
     /// Value to convert Degrees to Radian
@@ -44,6 +51,16 @@ public class Context : IDisposable
         // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
         Dispose(disposing: false);
     }
+
+    /// <summary>
+    /// HouseContext for accessing house calculations and data.
+    /// </summary>
+    public HouseContext HouseContext { get; } = houseContext;
+
+    /// <summary>
+    /// PlanetContext for accessing planetary data and calculations.
+    /// </summary>
+    public PlanetContext PlanetContext { get; } = planetContext;
 
     /// <summary>
     /// Reduce x modulo 360 degrees
@@ -215,7 +232,7 @@ public class Context : IDisposable
         return new Tuple<double, double>(p, q);
     }
 
-    private const double OFFSET_EPS_JPLHORIZONS = (35.95);
+    private const double OFFSET_EPS_JPLHORIZONS = 35.95;
     private const double DCOR_EPS_JPL_TJD0 = 2437846.5;
     private const int NDCOR_EPS_JPL = 51;
     private static readonly double[] dcor_eps_jpl = [
@@ -249,43 +266,44 @@ public class Context : IDisposable
     ///
     /// See precess and page B18 of the Astronomical Almanac.
     /// </remarks>
-    internal static double Epsiln(double jd, JPL.JplHorizonMode horizons)
+    internal double Epsiln(double jd, JPL.JplHorizonMode horizons)
     {
+        var options = swephNetSettingsOptionsMonitor.CurrentValue;
         double T = (jd - 2451545.0) / 36525.0;
         double eps;
-        if ((horizons & JPL.JplHorizonMode.JplHorizons) != 0 && IncludeCodeForDpsiDepsIAU1980)
+        if ((horizons & JPL.JplHorizonMode.JplHorizons) != 0 && options.IncludeCodeForDpsiDepsIAU1980)
         {
             eps = (((1.813e-3 * T - 5.9e-4) * T - 46.8150) * T + 84381.448) * DegreesToRadians / 3600;
         }
-        else if ((horizons & JPL.JplHorizonMode.JplApproximate) != 0 && !ApproximateHorizonsAstrodienst)
+        else if ((horizons & JPL.JplHorizonMode.JplApproximate) != 0 && !options.ApproximateHorizonsAstrodienst)
         {
             eps = (((1.813e-3 * T - 5.9e-4) * T - 46.8150) * T + 84381.448) * DegreesToRadians / 3600;
         }
-        else if (UsePrecessionIAU == PrecessionIAU.IAU_1976 && Math.Abs(T) <= PrecessionIAU_1976_Centuries)
+        else if (options.UsePrecessionIAU == PrecessionIAU.IAU_1976 && Math.Abs(T) <= PrecessionIAU_1976_Centuries)
         {
             eps = (((1.813e-3 * T - 5.9e-4) * T - 46.8150) * T + 84381.448) * DegreesToRadians / 3600;
         }
-        else if (UsePrecessionIAU == PrecessionIAU.IAU_2000 && Math.Abs(T) <= PrecessionIAU_2000_Centuries)
+        else if (options.UsePrecessionIAU == PrecessionIAU.IAU_2000 && Math.Abs(T) <= PrecessionIAU_2000_Centuries)
         {
             eps = (((1.813e-3 * T - 5.9e-4) * T - 46.84024) * T + 84381.406) * DegreesToRadians / 3600;
         }
-        else if (UsePrecessionIAU == PrecessionIAU.IAU_2006 && Math.Abs(T) <= PrecessionIAU_2006_Centuries)
+        else if (options.UsePrecessionIAU == PrecessionIAU.IAU_2006 && Math.Abs(T) <= PrecessionIAU_2006_Centuries)
         {
             eps = (((((-4.34e-8 * T - 5.76e-7) * T + 2.0034e-3) * T - 1.831e-4) * T - 46.836769) * T + 84381.406) * DegreesToRadians / 3600.0;
         }
-        else if (UsePrecessionCoefficient == PrecessionCoefficients.Bretagnon2003)
+        else if (options.UsePrecessionCoefficient == PrecessionCoefficients.Bretagnon2003)
         {
             eps = ((((((-3e-11 * T - 2.48e-8) * T - 5.23e-7) * T + 1.99911e-3) * T - 1.667e-4) * T - 46.836051) * T + 84381.40880) * DegreesToRadians / 3600.0;
         }
-        else if (UsePrecessionCoefficient == PrecessionCoefficients.Simon1994)
+        else if (options.UsePrecessionCoefficient == PrecessionCoefficients.Simon1994)
         {
             eps = (((((2.5e-8 * T - 5.1e-7) * T + 1.9989e-3) * T - 1.52e-4) * T - 46.80927) * T + 84381.412) * DegreesToRadians / 3600.0;
         }
-        else if (UsePrecessionCoefficient == PrecessionCoefficients.Williams1994)
+        else if (options.UsePrecessionCoefficient == PrecessionCoefficients.Williams1994)
         {
             eps = ((((-1.0e-6 * T + 2.0e-3) * T - 1.74e-4) * T - 46.833960) * T + 84381.409) * DegreesToRadians / 3600.0;/* */
         }
-        else if (UsePrecessionCoefficient == PrecessionCoefficients.Laskar1986)
+        else if (options.UsePrecessionCoefficient == PrecessionCoefficients.Laskar1986)
         {
             T /= 10.0;
             eps = (((((((((2.45e-10 * T + 5.79e-9) * T + 2.787e-7) * T
@@ -299,7 +317,7 @@ public class Context : IDisposable
             // Vondrak2011
             var tup = LdpPeps(jd);
             eps = tup.Item2;
-            if ((horizons & JPL.JplHorizonMode.JplApproximate) != 0 && !ApproximateHorizonsAstrodienst)
+            if ((horizons & JPL.JplHorizonMode.JplApproximate) != 0 && !options.ApproximateHorizonsAstrodienst)
             {
                 double tofs = (jd - DCOR_EPS_JPL_TJD0) / 365.25;
                 double dofs = OFFSET_EPS_JPLHORIZONS;
@@ -333,8 +351,9 @@ public class Context : IDisposable
 
     //internal double[] Nutation(double J, JPL.JplHorizonMode jplMode)
     //{
+    //    var options = swephNetSettingsOptionsMonitor.CurrentValue;
     //    double[] result;
-    //    if ((jplMode & JPL.JplHorizonMode.JplHorizons) != 0 && IncludeCodeForDpsiDepsIAU1980)
+    //    if ((jplMode & JPL.JplHorizonMode.JplHorizons) != 0 && options.IncludeCodeForDpsiDepsIAU1980)
     //    {
     //        result = NutationIAU1980(J);
     //    }
@@ -346,94 +365,32 @@ public class Context : IDisposable
     //    {
     //        result = NutationIAU2000ab(J);
     //        /*if ((iflag & SEFLG_JPLHOR_APPROX) && FRAME_BIAS_APPROX_HORIZONS) {*/
-    //        if ((jplMode & JPL.JplHorizonMode.JplApproximate) != 0 && !ApproximateHorizonsAstrodienst)
+    //        if ((jplMode & JPL.JplHorizonMode.JplApproximate) != 0 && !options.ApproximateHorizonsAstrodienst)
     //        {
-    //            result[0] += -41.7750 / 3600.0 / 1000.0 * DEGTORAD;
-    //            result[1] += -6.8192 / 3600.0 / 1000.0 * DEGTORAD;
+    //            result[0] += -41.7750 / 3600.0 / 1000.0 * DegreesToRadians;
+    //            result[1] += -6.8192 / 3600.0 / 1000.0 * DegreesToRadians;
     //        }
     //    }
-    //    if (IncludeCodeForDpsiDepsIAU1980)
+    //    if (options.IncludeCodeForDpsiDepsIAU1980)
     //    {
     //        if ((jplMode & JPL.JplHorizonMode.JplHorizons) != 0)
     //        {
     //            double n = (int)(swed.eop_tjd_end - swed.eop_tjd_beg + 0.000001);
     //            double J2 = J;
     //            if (J < swed.eop_tjd_beg_horizons)
+    //            {
     //                J2 = swed.eop_tjd_beg_horizons;
+    //            }
+    //
     //            double dpsi = bessel(swed.dpsi, n + 1, J2 - swed.eop_tjd_beg);
     //            double deps = bessel(swed.deps, n + 1, J2 - swed.eop_tjd_beg);
-    //            result[0] += dpsi / 3600.0 * DEGTORAD;
-    //            result[1] += deps / 3600.0 * DEGTORAD;
+    //            result[0] += dpsi / 3600.0 * DegreesToRadians;
+    //            result[1] += deps / 3600.0 * DegreesToRadians;
     //        }
     //    }
+    //
     //    return result;
     //}
-
-    #endregion
-
-    #region Parameters
-
-    /// <summary>
-    /// Precession coefficients for remote past and future
-    /// </summary>
-    public static PrecessionCoefficients UsePrecessionCoefficient = PrecessionCoefficients.Vondrak2011;
-
-    /// <summary>
-    /// IAU precession 1976 or 2003 for recent centuries.
-    /// </summary>
-    public static PrecessionIAU UsePrecessionIAU = PrecessionIAU.None;
-
-    /// <summary>
-    /// You can set the latter false if you do not want to compile the
-    /// code required to reproduce JPL Horizons.
-    /// Keep it TRUE in order to reproduce JPL Horizons following
-    /// IERS Conventions 1996 (1992), p. 22. Call swe_calc_ut() with
-    /// iflag|SEFLG_JPLHOR.  This options runs only, if the files
-    /// DPSI_DEPS_IAU1980_FILE_EOPC04 and DPSI_DEPS_IAU1980_FILE_FINALS
-    /// are in the ephemeris path.
-    /// </summary>
-    public static bool IncludeCodeForDpsiDepsIAU1980 = true;
-
-    /// <summary>
-    /// If the above define INCLUDE_CODE_FOR_DPSI_DEPS_IAU1980 is FALSE or
-    /// the software does not find the earth orientation files (see above)
-    /// in the ephemeris path, then SEFLG_JPLHOR will run as
-    /// SEFLG_JPLHOR_APPROX.
-    /// The following define APPROXIMATE_HORIZONS_ASTRODIENST defines
-    /// the handling of SEFLG_JPLHOR_APPROX.
-    /// With this flag, planetary positions are always calculated
-    /// using a recent precession/nutation model.
-    /// If APPROXIMATE_HORIZONS_ASTRODIENST is FALSE, then the
-    /// frame bias as recommended by IERS Conventions 2003 and 2010
-    /// is *not* applied. Instead, dpsi_bias and deps_bias are added to
-    /// nutation. This procedure is found in some older astronomical software.
-    /// Equatorial apparent positions will be close to JPL Horizons
-    /// (within a few mas) beetween 1962 and current years. Ecl. longitude
-    /// will be good, latitude bad.
-    /// If APPROXIMATE_HORIZONS_ASTRODIENST is TRUE, the approximation of
-    /// JPL Horizons is even better. Frame bias matrix is applied with
-    /// some correction to RA and another correction is added to epsilon.
-    /// </summary>
-    public static bool ApproximateHorizonsAstrodienst = true;
-
-    /// <summary>
-    /// The latter, if combined with SEFLG_JPLHOR provides good agreement
-    /// with JPL Horizons for 1800 - today. However, Horizons uses correct
-    /// dpsi and deps only after 20-jan-1962. For all dates before that
-    /// it uses dpsi and deps of 20-jan-1962, which provides a continuous
-    /// ephemeris, but does not make sense otherwise.
-    /// Before 1800, even this option does not provide agreement with Horizons,
-    /// because Horizons uses a different precession model (Owen 1986)
-    /// before 1800, which is not included in the Swiss Ephemeris.
-    /// If this macro is FALSE then the program defaults to SEFLG_JPLHOR_APPROX
-    /// outside the time range of correction data dpsi and deps.
-    /// Note that this will result in a non-continuous ephemeris near
-    /// 20-jan-1962 and current years.
-    /// </summary>
-    /// <remarks>
-    /// Horizons method before 20-jan-1962
-    /// </remarks>
-    public static bool UseHorizonsMethodBefore1980 = true;
 
     #endregion
 }
