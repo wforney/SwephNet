@@ -13,6 +13,12 @@ public partial record struct JulianDay
     public const double B1950 = 2433282.42345905;
 
     /// <summary>
+    /// The Julian date for the start of the JPL ephemeris data used for precession calculations.
+    /// </summary>
+    [SuppressMessage("Naming", "CA1707:Identifiers should not contain underscores", Justification = "TODO")]
+    public const double DCOR_EPS_JPL_TJD0 = 2437846.5;
+
+    /// <summary>
     /// Gets the first Julian Day of the Gregorian calendar : October 15, 1582
     /// </summary>
     public const double GregorianFirstJD = 2299160.5;
