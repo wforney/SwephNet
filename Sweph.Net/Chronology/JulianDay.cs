@@ -8,26 +8,24 @@ namespace Sweph.Net.Chronology;
 public partial record struct JulianDay
 {
     /// <summary>
-    /// 2000 January 1.5
+    /// 1950 January 0.923
     /// </summary>
-    public const double J2000 = 2451545.0;
+    public const double B1950 = 2433282.42345905;
 
     /// <summary>
-    /// First Julian Day of the Gregorian calendar : October 15, 1582
+    /// Gets the first Julian Day of the Gregorian calendar : October 15, 1582
     /// </summary>
     public const double GregorianFirstJD = 2299160.5;
 
     /// <summary>
-    /// Gets the calendar.
+    /// 1900 January 0.5
     /// </summary>
-    /// <value>The calendar.</value>
-    public DateCalendar Calendar { get; private init; }
+    public const double J1900 = 2415020.0;
 
     /// <summary>
-    /// Gets the absolute Julian Day value.
+    /// 2000 January 1.5
     /// </summary>
-    /// <value>The absolute Julian Day value.</value>
-    public double Value { get; init; }
+    public const double J2000 = 2451545.0;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="JulianDay"/> struct.
@@ -82,12 +80,24 @@ public partial record struct JulianDay
     }
 
     /// <summary>
+    /// Gets the calendar.
+    /// </summary>
+    /// <value>The calendar.</value>
+    public DateCalendar Calendar { get; private init; }
+
+    /// <summary>
+    /// Gets the absolute Julian Day value.
+    /// </summary>
+    /// <value>The absolute Julian Day value.</value>
+    public double Value { get; init; }
+
+    /// <summary>
     /// Get default calendar from a date
     /// </summary>
     /// <remarks>Gregorian calendar start at October 15, 1582</remarks>
     public static DateCalendar GetCalendar(int year, int month, int day)
     {
-        int date = year * 10000 + month * 100 + day;
+        int date = (year * 10000) + (month * 100) + day;
         return date >= 15821115 ? DateCalendar.Gregorian : DateCalendar.Julian;
     }
 
@@ -144,7 +154,7 @@ public partial record struct JulianDay
     /// <param name="minute">Minute</param>
     /// <param name="second">Second</param>
     /// <returns>The hour in decimal value</returns>
-    public static double GetHourValue(int hour, int minute, int second) => hour + minute / 60.0 + second / 3600.0;
+    public static double GetHourValue(int hour, int minute, int second) => hour + (minute / 60.0) + (second / 3600.0);
 
     /// <summary>
     /// This function returns the absolute Julian day number (JD) for a given date.
@@ -225,8 +235,8 @@ public partial record struct JulianDay
         }
 
         jd = Math.Floor(u0 * 365.25)
-           + Math.Floor(30.6 * u1 + 0.000001)
-           + day + hour / 24.0 - 63.5;
+           + Math.Floor((30.6 * u1) + 0.000001)
+           + day + (hour / 24.0) - 63.5;
         if (calendar == DateCalendar.Gregorian)
         {
             u2 = Math.Floor(Math.Abs(u) / 100) - Math.Floor(Math.Abs(u) / 400);
@@ -247,7 +257,7 @@ public partial record struct JulianDay
     /// <summary>
     /// Get the day of the week of a Julian Day
     /// </summary>
-    public static WeekDay DayOfWeek(double jd) => (WeekDay)(((int)Math.Floor(jd - 2433282 - 1.5) % 7 + 7) % 7);
+    public static WeekDay DayOfWeek(double jd) => (WeekDay)((((int)Math.Floor(jd - 2433282 - 1.5) % 7) + 7) % 7);
 
     /// <summary>
     /// Convert a Julian Day to a DateTime
