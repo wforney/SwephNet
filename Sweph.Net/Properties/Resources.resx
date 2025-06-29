@@ -285,4 +285,7 @@
   <data name="PlanetName_Vesta" xml:space="preserve">
     <value>Vesta</value>
   </data>
+  <data name="Planet_NameNotFound" xml:space="preserve">
+    <value>Name not found</value>
+  </data>
 </root>

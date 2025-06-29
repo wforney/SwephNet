@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Sweph.Net.Chronology;
+using Sweph.Net.Houses;
+using Sweph.Net.Planets;
 
 namespace Sweph.Net.DepenencyInjection;
 
@@ -18,12 +20,10 @@ public static class ServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        // SweDate
-        // SwePlanet
-        // SwpHouse
-
         services.TryAddSingleton<Context>();
         services.TryAddSingleton<JulianDayDeltaT>();
+        services.TryAddSingleton<HouseContext>();
+        services.TryAddSingleton<PlanetContext>();
 
         return services;
     }

@@ -358,6 +358,15 @@ namespace Sweph.Net.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Name not found.
+        /// </summary>
+        internal static string Planet_NameNotFound {
+            get {
+                return ResourceManager.GetString("Planet_NameNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Ceres.
         /// </summary>
         internal static string PlanetName_Ceres {

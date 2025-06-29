@@ -345,7 +345,7 @@ internal sealed partial class FileService
     /// <returns>
     /// A Task&lt;string?&gt; representing the asynchronous operation, containing the name of the asteroid if found, or null if not found.
     /// </returns>
-    public static async Task<string?> FindAsteroidName(int id, CancellationToken cancellationToken = default)
+    public static async Task<string?> FindAsteroidNameAsync(int id, CancellationToken cancellationToken = default)
     {
         string[]? lines = await File.ReadAllLinesAsync(AsteroidFileName, cancellationToken).ConfigureAwait(false);
         if (lines is null || lines.Length == 0)
