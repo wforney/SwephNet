@@ -28,6 +28,22 @@ public partial record struct JulianDay
     public const double J2000 = 2451545.0;
 
     /// <summary>
+    /// J2000 +/- two centuries
+    /// </summary>
+    internal const double PrecessionIAU_1976_Centuries = 2.0;
+
+    /// <summary>
+    /// J2000 +/- two centuries
+    /// </summary>
+    internal const double PrecessionIAU_2000_Centuries = 2.0;
+
+    /// <summary>
+    /// J2000 +/- 75 centuries
+    /// </summary>
+    /// <remarks>we use P03 for whole ephemeris</remarks>
+    internal const double PrecessionIAU_2006_Centuries = 75.0;
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="JulianDay"/> struct.
     /// </summary>
     /// <param name="year">The year.</param>
