@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Sweph.Net.Chronology;
 using Sweph.Net.Houses;
 using Sweph.Net.Planets;
+using Sweph.Net.Services;
 
 namespace Sweph.Net.DepenencyInjection;
 
@@ -28,6 +29,7 @@ public static class ServiceCollectionExtensions
         services.Configure<SwephNetSettings>(configuration.GetSection(SwephNetSettings.SectionName));
 
         services.TryAddSingleton<Context>();
+        services.TryAddSingleton<IFileService, FileService>();
         services.TryAddSingleton<HouseContext>();
         services.TryAddSingleton<JulianDayDeltaT>();
         services.TryAddSingleton<PlanetContext>();

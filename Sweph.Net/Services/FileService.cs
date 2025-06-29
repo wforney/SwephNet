@@ -11,7 +11,7 @@ namespace Sweph.Net.Services;
 /// <summary>
 /// Provides file loading functionality for the Swiss Ephemeris library.
 /// </summary>
-internal static partial class FileService
+internal partial class FileService : IFileService
 {
     private const string AsteroidFileName = "seasnam.txt";
     private const string DeltaTFileName = "swe_deltat.txt";
@@ -19,18 +19,89 @@ internal static partial class FileService
     private const string FictitiousFileName = "seorbel.txt";
     private const int FictitiousGeo = 1;
 
-    /// <summary>
-    /// Find element as an asynchronous operation.
-    /// </summary>
-    /// <param name="idPlanet">The identifier planet.</param>
-    /// <param name="julianDay">The julian day.</param>
-    /// <param name="fict_ifl">Fictitious ifl value.</param>
-    /// <param name="cancellationToken">The cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-    /// <returns>
-    ///
-    /// </returns>
-    /// <exception cref="SwephNetException"></exception>
-    public static async Task<(OsculatingElement? OsculatingElement, int? fict_ifl)> FindElementAsync(int idPlanet, double julianDay, int fict_ifl, CancellationToken cancellationToken = default)
+    /// <inheritdoc/>
+    public async Task<string?> FindAsteroidNameAsync(int id, CancellationToken cancellationToken = default)
+    {
+        string[]? lines = await File.ReadAllLinesAsync(AsteroidFileName, cancellationToken).ConfigureAwait(false);
+        if (lines is null || lines.Length == 0)
+        {
+            return null;
+        }
+
+        Regex reg = AsteroidLineRegex();
+
+        foreach (string line in lines)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            string trimmedLine = line.TrimStart(' ', '\t', '(', '[', '{');
+            if (string.IsNullOrWhiteSpace(trimmedLine) || trimmedLine.StartsWith('#'))
+            {
+                continue;
+            }
+
+            Match match = reg.Match(trimmedLine);
+            if (!match.Success)
+            {
+                continue;
+            }
+
+            int planetId = int.Parse(match.Groups[1].Value, CultureInfo.CurrentCulture);
+            if (planetId == id)
+            {
+                return match.Groups[2].Value;
+            }
+        }
+
+        return null;
+    }
+
+    /// <inheritdoc/>
+    public async IAsyncEnumerable<DeltaT> GetDeltaTRecordsAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        string[]? lines = await File.ReadAllLinesAsync(DeltaTFileName, cancellationToken).ConfigureAwait(false);
+        if (lines is null || lines.Length == 0)
+        {
+            lines = await File.ReadAllLinesAsync(DeltaTFileNameAlt, cancellationToken).ConfigureAwait(false);
+        }
+
+        if (lines is null || lines.Length == 0)
+        {
+            yield break;
+        }
+
+        Regex reg = DeltaTRecordLineRegex();
+
+        foreach (string line in lines)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            string trimmedLine = line.Trim(' ', '\t');
+            if (string.IsNullOrWhiteSpace(trimmedLine) || trimmedLine.StartsWith('#'))
+            {
+                continue;
+            }
+
+            Match match = reg.Match(line);
+            if (match.Success)
+            {
+                if (!int.TryParse(match.Groups[1].Value, out int year))
+                {
+                    continue;
+                }
+
+                if (!double.TryParse(match.Groups[2].Value, NumberStyles.Any, CultureInfo.InvariantCulture, out double value))
+                {
+                    continue;
+                }
+
+                yield return new DeltaT(year, value);
+            }
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<(OsculatingElement? OsculatingElement, int? fict_ifl)> FindElementAsync(int idPlanet, double julianDay, int fict_ifl, CancellationToken cancellationToken = default)
     {
         string[]? lines = await File.ReadAllLinesAsync(FictitiousFileName, cancellationToken).ConfigureAwait(false);
         if (lines is null || lines.Length == 0)
@@ -77,60 +148,29 @@ internal static partial class FileService
             }
 
             // epoch of elements
-            double epoch;
             string sp = parts[0].ToUpperInvariant();
-
-            if (sp.StartsWith("J2000", StringComparison.OrdinalIgnoreCase))
+            double epoch = true switch
             {
-                epoch = JulianDay.J2000;
-            }
-            else if (sp.StartsWith("B1950", StringComparison.OrdinalIgnoreCase))
-            {
-                epoch = JulianDay.B1950;
-            }
-            else if (sp.StartsWith("J1900", StringComparison.OrdinalIgnoreCase))
-            {
-                epoch = JulianDay.J1900;
-            }
-            else if (sp.StartsWith('J') || sp.StartsWith('B'))
-            {
-                throw new SwephNetException(Resources.Error_ReadingFile, FictitiousFileName, lineCount, Resources.Fictitious_ErrorInvalidEpoch);
-            }
-            else
-            {
-                epoch = double.Parse(sp, CultureInfo.InvariantCulture);
-            }
+                bool when sp.StartsWith("J2000", StringComparison.OrdinalIgnoreCase) => JulianDay.J2000,
+                bool when sp.StartsWith("B1950", StringComparison.OrdinalIgnoreCase) => JulianDay.B1950,
+                bool when sp.StartsWith("J1900", StringComparison.OrdinalIgnoreCase) => JulianDay.J1900,
+                bool when sp.StartsWith('J') || sp.StartsWith('B') => throw new SwephNetException(Resources.Error_ReadingFile, FictitiousFileName, lineCount, Resources.Fictitious_ErrorInvalidEpoch),
+                _ => double.Parse(sp, CultureInfo.InvariantCulture)
+            };
 
             var tt = julianDay - epoch;
 
             // equinox
-            double equinox;
             sp = parts[1].TrimStart(' ', '\t').ToUpperInvariant();
-
-            if (sp.StartsWith("J2000", StringComparison.OrdinalIgnoreCase))
+            double equinox = true switch
             {
-                equinox = JulianDay.J2000;
-            }
-            else if (sp.StartsWith("B1950", StringComparison.OrdinalIgnoreCase))
-            {
-                equinox = JulianDay.B1950;
-            }
-            else if (sp.StartsWith("J1900", StringComparison.OrdinalIgnoreCase))
-            {
-                equinox = JulianDay.J1900;
-            }
-            else if (sp.StartsWith("JDATE", StringComparison.OrdinalIgnoreCase))
-            {
-                equinox = julianDay;
-            }
-            else if (sp.StartsWith('J') || sp.StartsWith('B'))
-            {
-                throw new SwephNetException(Resources.Error_ReadingFile, FictitiousFileName, lineCount, Resources.Fictitious_ErrorInvalidEquinox);
-            }
-            else
-            {
-                equinox = double.Parse(sp, CultureInfo.InvariantCulture);
-            }
+                bool when sp.StartsWith("J2000", StringComparison.OrdinalIgnoreCase) => JulianDay.J2000,
+                bool when sp.StartsWith("B1950", StringComparison.OrdinalIgnoreCase) => JulianDay.B1950,
+                bool when sp.StartsWith("J1900", StringComparison.OrdinalIgnoreCase) => JulianDay.J1900,
+                bool when sp.StartsWith("JDATE", StringComparison.OrdinalIgnoreCase) => julianDay,
+                bool when sp.StartsWith('J') || sp.StartsWith('B') => throw new SwephNetException(Resources.Error_ReadingFile, FictitiousFileName, lineCount, Resources.Fictitious_ErrorInvalidEquinox),
+                _ => double.Parse(sp, CultureInfo.InvariantCulture)
+            };
 
             // mean anomaly t0
             var retc = CheckTTerms(tt, parts[2], out double dTmp);
@@ -240,6 +280,9 @@ internal static partial class FileService
         return (result, fict_ifl);
     }
 
+    [GeneratedRegex(@"^[\s\(\{\[]*(\d+)[\s\)\}\]]*(.+)$")]
+    private static partial Regex AsteroidLineRegex();
+
     private static int CheckTTerms(double t, string sinp, out double doutp)
     {
         int z;
@@ -336,104 +379,6 @@ internal static partial class FileService
 
         //return retc;	// there have been additional terms
     }
-
-    /// <summary>
-    /// Finds the name of the asteroid with the specified identifier as an asynchronous operation.
-    /// </summary>
-    /// <param name="id">The identifier.</param>
-    /// <param name="cancellationToken">The cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-    /// <returns>
-    /// A Task&lt;string?&gt; representing the asynchronous operation, containing the name of the asteroid if found, or null if not found.
-    /// </returns>
-    public static async Task<string?> FindAsteroidNameAsync(int id, CancellationToken cancellationToken = default)
-    {
-        string[]? lines = await File.ReadAllLinesAsync(AsteroidFileName, cancellationToken).ConfigureAwait(false);
-        if (lines is null || lines.Length == 0)
-        {
-            return null;
-        }
-
-        Regex reg = AsteroidLineRegex();
-
-        foreach (string line in lines)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            string trimmedLine = line.TrimStart(' ', '\t', '(', '[', '{');
-            if (string.IsNullOrWhiteSpace(trimmedLine) || trimmedLine.StartsWith('#'))
-            {
-                continue;
-            }
-
-            Match match = reg.Match(trimmedLine);
-            if (!match.Success)
-            {
-                continue;
-            }
-
-            int planetId = int.Parse(match.Groups[1].Value, CultureInfo.CurrentCulture);
-            if (planetId == id)
-            {
-                return match.Groups[2].Value;
-            }
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Get delta t records as an asynchronous operation.
-    /// </summary>
-    /// <param name="cancellationToken">
-    /// The cancellation token that can be used by other objects or threads to receive notice of cancellation.
-    /// </param>
-    /// <returns>A Task&lt;IAsyncEnumerable`1&gt; representing the asynchronous operation.</returns>
-    public static async IAsyncEnumerable<DeltaT> GetDeltaTRecordsAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        string[]? lines = await File.ReadAllLinesAsync(DeltaTFileName, cancellationToken).ConfigureAwait(false);
-        if (lines is null || lines.Length == 0)
-        {
-            lines = await File.ReadAllLinesAsync(DeltaTFileNameAlt, cancellationToken).ConfigureAwait(false);
-        }
-
-        if (lines is null || lines.Length == 0)
-        {
-            yield break;
-        }
-
-        Regex reg = DeltaTRecordLineRegex();
-
-        foreach (string line in lines)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            string trimmedLine = line.Trim(' ', '\t');
-            if (string.IsNullOrWhiteSpace(trimmedLine) || trimmedLine.StartsWith('#'))
-            {
-                continue;
-            }
-
-            Match match = reg.Match(line);
-            if (match.Success)
-            {
-                if (!int.TryParse(match.Groups[1].Value, out int year))
-                {
-                    continue;
-                }
-
-                if (!double.TryParse(match.Groups[2].Value, NumberStyles.Any, CultureInfo.InvariantCulture, out double value))
-                {
-                    continue;
-                }
-
-                yield return new DeltaT(year, value);
-            }
-        }
-    }
-
-    [GeneratedRegex(@"^[\s\(\{\[]*(\d+)[\s\)\}\]]*(.+)$")]
-    private static partial Regex AsteroidLineRegex();
-
     [GeneratedRegex(@"^(\d{4})\s+(\d+\.\d+)$")]
     private static partial Regex DeltaTRecordLineRegex();
 }
