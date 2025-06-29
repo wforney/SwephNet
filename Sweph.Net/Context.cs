@@ -104,7 +104,7 @@ public class Context(
     /// <summary>
     /// Julian day for dcor_eps_jpl
     /// </summary>
-    private static readonly double[] s_Dcor_eps_jpl = [
+    private static readonly double[] Dcor_eps_jpl = [
                 36.726, 36.627, 36.595, 36.578, 36.640, 36.659, 36.731, 36.765,
             36.662, 36.555, 36.335, 36.321, 36.354, 36.227, 36.289, 36.348, 36.257, 36.163,
             35.979, 35.896, 35.842, 35.825, 35.912, 35.950, 36.093, 36.191, 36.009, 35.943,
@@ -116,7 +116,7 @@ public class Context(
     /// <summary>
     /// for pre_peps(): periodics
     /// </summary>
-    private static readonly double[][] s_Peper = [
+    private static readonly double[][] Peper = [
           [+409.90, +396.15, +537.22, +402.90, +417.15, +288.92, +4043.00, +306.00, +277.00, +203.00],
           [-6908.287473, -3198.706291, +1453.674527, -857.748557, +1173.231614, -156.981465, +371.836550, -216.619040, +193.691479, +11.891524],
           [+753.872780, -247.805823, +379.471484, -53.880558, -90.109153, -353.600190, -63.115353, -28.248187, +17.703387, +38.911307],
@@ -127,7 +127,7 @@ public class Context(
     /// <summary>
     /// for pre_peps(): polynomials
     /// </summary>
-    private static readonly double[][] s_Pepol = [
+    private static readonly double[][] Pepol = [
           [+8134.017132, +84028.206305],
           [+5043.0520035, +0.3624445],
           [-0.00710733, -0.00004039],
@@ -151,19 +151,19 @@ public class Context(
         for (i = 0; i < nper; i++)
         {
             w = D2PI * t;
-            a = w / s_Peper[0][i];
+            a = w / Peper[0][i];
             s = Math.Sin(a);
             c = Math.Cos(a);
-            p += (c * s_Peper[1][i]) + (s * s_Peper[3][i]);
-            q += (c * s_Peper[2][i]) + (s * s_Peper[4][i]);
+            p += (c * Peper[1][i]) + (s * Peper[3][i]);
+            q += (c * Peper[2][i]) + (s * Peper[4][i]);
         }
 
         // polynomial terms
         w = 1;
         for (i = 0; i < npol; i++)
         {
-            p += s_Pepol[i][0] * w;
-            q += s_Pepol[i][1] * w;
+            p += Pepol[i][0] * w;
+            q += Pepol[i][1] * w;
             w *= t;
         }
 
@@ -197,46 +197,46 @@ public class Context(
     internal double Epsiln(double jd, JPL.JplHorizonMode horizons)
     {
         SwephNetSettings options = swephNetSettingsOptionsMonitor.CurrentValue;
-        double T = (jd - 2451545.0) / 36525.0;
+        double t = (jd - 2451545.0) / 36525.0;
         double eps;
         if ((horizons & JPL.JplHorizonMode.JplHorizons) != 0 && options.IncludeCodeForDpsiDepsIAU1980)
         {
-            eps = ((((((1.813e-3 * T) - 5.9e-4) * T) - 46.8150) * T) + 84381.448) * DegreesToRadians / 3600;
+            eps = ((((((1.813e-3 * t) - 5.9e-4) * t) - 46.8150) * t) + 84381.448) * DegreesToRadians / 3600;
         }
         else if ((horizons & JPL.JplHorizonMode.JplApproximate) != 0 && !options.ApproximateHorizonsAstrodienst)
         {
-            eps = ((((((1.813e-3 * T) - 5.9e-4) * T) - 46.8150) * T) + 84381.448) * DegreesToRadians / 3600;
+            eps = ((((((1.813e-3 * t) - 5.9e-4) * t) - 46.8150) * t) + 84381.448) * DegreesToRadians / 3600;
         }
-        else if (options.UsePrecessionIAU == PrecessionIAU.IAU_1976 && Math.Abs(T) <= JulianDay.PrecessionIAU_1976_Centuries)
+        else if (options.UsePrecessionIAU == PrecessionIAU.IAU_1976 && Math.Abs(t) <= JulianDay.PrecessionIAU_1976_Centuries)
         {
-            eps = ((((((1.813e-3 * T) - 5.9e-4) * T) - 46.8150) * T) + 84381.448) * DegreesToRadians / 3600;
+            eps = ((((((1.813e-3 * t) - 5.9e-4) * t) - 46.8150) * t) + 84381.448) * DegreesToRadians / 3600;
         }
-        else if (options.UsePrecessionIAU == PrecessionIAU.IAU_2000 && Math.Abs(T) <= JulianDay.PrecessionIAU_2000_Centuries)
+        else if (options.UsePrecessionIAU == PrecessionIAU.IAU_2000 && Math.Abs(t) <= JulianDay.PrecessionIAU_2000_Centuries)
         {
-            eps = ((((((1.813e-3 * T) - 5.9e-4) * T) - 46.84024) * T) + 84381.406) * DegreesToRadians / 3600;
+            eps = ((((((1.813e-3 * t) - 5.9e-4) * t) - 46.84024) * t) + 84381.406) * DegreesToRadians / 3600;
         }
-        else if (options.UsePrecessionIAU == PrecessionIAU.IAU_2006 && Math.Abs(T) <= JulianDay.PrecessionIAU_2006_Centuries)
+        else if (options.UsePrecessionIAU == PrecessionIAU.IAU_2006 && Math.Abs(t) <= JulianDay.PrecessionIAU_2006_Centuries)
         {
-            eps = ((((((((((-4.34e-8 * T) - 5.76e-7) * T) + 2.0034e-3) * T) - 1.831e-4) * T) - 46.836769) * T) + 84381.406) * DegreesToRadians / 3600.0;
+            eps = ((((((((((-4.34e-8 * t) - 5.76e-7) * t) + 2.0034e-3) * t) - 1.831e-4) * t) - 46.836769) * t) + 84381.406) * DegreesToRadians / 3600.0;
         }
         else if (options.UsePrecessionCoefficient == PrecessionCoefficients.Bretagnon2003)
         {
-            eps = ((((((((((((-3e-11 * T) - 2.48e-8) * T) - 5.23e-7) * T) + 1.99911e-3) * T) - 1.667e-4) * T) - 46.836051) * T) + 84381.40880) * DegreesToRadians / 3600.0;
+            eps = ((((((((((((-3e-11 * t) - 2.48e-8) * t) - 5.23e-7) * t) + 1.99911e-3) * t) - 1.667e-4) * t) - 46.836051) * t) + 84381.40880) * DegreesToRadians / 3600.0;
         }
         else if (options.UsePrecessionCoefficient == PrecessionCoefficients.Simon1994)
         {
-            eps = ((((((((((2.5e-8 * T) - 5.1e-7) * T) + 1.9989e-3) * T) - 1.52e-4) * T) - 46.80927) * T) + 84381.412) * DegreesToRadians / 3600.0;
+            eps = ((((((((((2.5e-8 * t) - 5.1e-7) * t) + 1.9989e-3) * t) - 1.52e-4) * t) - 46.80927) * t) + 84381.412) * DegreesToRadians / 3600.0;
         }
         else if (options.UsePrecessionCoefficient == PrecessionCoefficients.Williams1994)
         {
-            eps = ((((((((-1.0e-6 * T) + 2.0e-3) * T) - 1.74e-4) * T) - 46.833960) * T) + 84381.409) * DegreesToRadians / 3600.0;/* */
+            eps = ((((((((-1.0e-6 * t) + 2.0e-3) * t) - 1.74e-4) * t) - 46.833960) * t) + 84381.409) * DegreesToRadians / 3600.0;/* */
         }
         else if (options.UsePrecessionCoefficient == PrecessionCoefficients.Laskar1986)
         {
-            T /= 10.0;
-            eps = (((((((((((((((((((2.45e-10 * T) + 5.79e-9) * T) + 2.787e-7) * T)
-            + 7.12e-7) * T) - 3.905e-5) * T) - 2.4967e-3) * T)
-            - 5.138e-3) * T) + 1.99925) * T) - 0.0155) * T) - 468.093) * T)
+            t /= 10.0;
+            eps = (((((((((((((((((((2.45e-10 * t) + 5.79e-9) * t) + 2.787e-7) * t)
+            + 7.12e-7) * t) - 3.905e-5) * t) - 2.4967e-3) * t)
+            - 5.138e-3) * t) + 1.99925) * t) - 0.0155) * t) - 468.093) * t)
             + 84381.448;
             eps *= DegreesToRadians / 3600.0;
         }
@@ -247,22 +247,22 @@ public class Context(
             eps = tup.Item2;
             if ((horizons & JPL.JplHorizonMode.JplApproximate) != 0 && !options.ApproximateHorizonsAstrodienst)
             {
-                double tofs = (jd - DCOR_EPS_JPL_TJD0) / 365.25;
+                double tofs = (jd - JulianDay.DCOR_EPS_JPL_TJD0) / 365.25;
                 double dofs;
                 if (tofs < 0)
                 {
-                    dofs = s_Dcor_eps_jpl[0];
+                    dofs = Dcor_eps_jpl[0];
                 }
                 else if (tofs >= NDCOR_EPS_JPL - 1)
                 {
-                    dofs = s_Dcor_eps_jpl[NDCOR_EPS_JPL - 1];
+                    dofs = Dcor_eps_jpl[NDCOR_EPS_JPL - 1];
                 }
                 else
                 {
                     double t0 = (int)tofs;
                     double t1 = t0 + 1;
-                    //dofs = dcor_eps_jpl[(int)t0];
-                    dofs = ((tofs - t0) * (s_Dcor_eps_jpl[(int)t0] - s_Dcor_eps_jpl[(int)t1])) + s_Dcor_eps_jpl[(int)t0];
+                    //dofs = dcor_eps_jpl[(int)t0]; // asignment discarded so commented out this line
+                    dofs = ((tofs - t0) * (Dcor_eps_jpl[(int)t0] - Dcor_eps_jpl[(int)t1])) + Dcor_eps_jpl[(int)t0];
                 }
 
                 dofs /= 1000.0 * 3600.0;
