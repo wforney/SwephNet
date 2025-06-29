@@ -22,15 +22,17 @@ internal partial class FileService : IFileService
     /// <inheritdoc/>
     public async Task<string?> FindAsteroidNameAsync(int id, CancellationToken cancellationToken = default)
     {
-        string[]? lines = await File.ReadAllLinesAsync(AsteroidFileName, cancellationToken).ConfigureAwait(false);
-        if (lines is null || lines.Length == 0)
+        var lines = File.ReadLinesAsync(AsteroidFileName, cancellationToken);
+        if (!await lines.AnyAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
         {
+            // If the file is empty or does not exist, return null
             return null;
         }
 
+        // Regex to match asteroid lines in the format: "id name"
         Regex reg = AsteroidLineRegex();
 
-        foreach (string line in lines)
+        await foreach (string line in lines.ConfigureAwait(false))
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -59,20 +61,22 @@ internal partial class FileService : IFileService
     /// <inheritdoc/>
     public async IAsyncEnumerable<DeltaT> GetDeltaTRecordsAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        string[]? lines = await File.ReadAllLinesAsync(DeltaTFileName, cancellationToken).ConfigureAwait(false);
-        if (lines is null || lines.Length == 0)
+        var lines = File.ReadLinesAsync(DeltaTFileName, cancellationToken);
+        if (!await lines.AnyAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
         {
-            lines = await File.ReadAllLinesAsync(DeltaTFileNameAlt, cancellationToken).ConfigureAwait(false);
+            // If the file is empty or does not exist, try the alternative file
+            lines = File.ReadLinesAsync(DeltaTFileNameAlt, cancellationToken);
         }
 
-        if (lines is null || lines.Length == 0)
+        if (!await lines.AnyAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
         {
+            // If the alternative file is also empty or does not exist, return an empty sequence
             yield break;
         }
 
         Regex reg = DeltaTRecordLineRegex();
 
-        foreach (string line in lines)
+        await foreach (string line in lines.ConfigureAwait(false))
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -103,9 +107,10 @@ internal partial class FileService : IFileService
     /// <inheritdoc/>
     public async Task<(OsculatingElement? OsculatingElement, int? fict_ifl)> FindElementAsync(int idPlanet, double julianDay, int fict_ifl, CancellationToken cancellationToken = default)
     {
-        string[]? lines = await File.ReadAllLinesAsync(FictitiousFileName, cancellationToken).ConfigureAwait(false);
-        if (lines is null || lines.Length == 0)
+        var lines = File.ReadLinesAsync(FictitiousFileName, Encoding.UTF8, cancellationToken);
+        if (!await lines.AnyAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
         {
+            // If the file is empty or does not exist, return null
             return (null, fict_ifl);
         }
 
@@ -113,7 +118,7 @@ internal partial class FileService : IFileService
         int lineCount = 0;
         int planetNumber = -1;
 
-        foreach (string line in lines)
+        await foreach (string line in lines.ConfigureAwait(false))
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -379,6 +384,7 @@ internal partial class FileService : IFileService
 
         //return retc;	// there have been additional terms
     }
+
     [GeneratedRegex(@"^(\d{4})\s+(\d+\.\d+)$")]
     private static partial Regex DeltaTRecordLineRegex();
 }
