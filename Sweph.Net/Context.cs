@@ -15,11 +15,29 @@ public class Context(
     IOptionsMonitor<SwephNetSettings> swephNetSettingsOptionsMonitor)
 {
     /// <summary>
+    /// Represents the conversion factor used to convert radians to arcseconds.
+    /// </summary>
+    /// <remarks>
+    /// Multiply an angle in radians by this constant to obtain the equivalent angle in arcseconds.
+    /// The value is derived from dividing (180 * 3600) by π.
+    /// </remarks>
+    public const double RadiansToArcSeconds = (180.0 * 3600.0) / Math.PI;
+
+    /// <summary>
+    /// Represents the conversion factor used to convert arcseconds to radians.
+    /// </summary>
+    /// <remarks>
+    /// Multiply an angle in arcseconds by this constant to obtain the equivalent angle in radians.
+    /// The value is derived from dividing π by (180 * 3600).
+    /// </remarks>
+    public const double ArcSecondsToRadians = Math.PI / (180.0 * 3600.0);
+
+    /// <summary>
     /// Represents the conversion factor used to convert degrees to radians.
     /// </summary>
     /// <remarks>
-    /// Multiply an angle in degrees by this constant to obtain the equivalent angle in radians. The
-    /// value is derived from dividing π by 180.
+    /// Multiply an angle in degrees by this constant to obtain the equivalent angle in radians.
+    /// The value is derived from dividing π by 180.
     /// </remarks>
     public const double DegreesToRadians = Math.PI / 180.0;
 
@@ -27,9 +45,8 @@ public class Context(
     /// Represents the conversion factor used to convert radians to degrees.
     /// </summary>
     /// <remarks>
-    /// Multiply an angle in radians by this constant to obtain the equivalent angle in degrees. The
-    /// value is derived from dividing 180 by π. This is useful for converting angles in
-    /// trigonometric calculations or when working with angular measurements in different units.
+    /// Multiply an angle in radians by this constant to obtain the equivalent angle in degrees.
+    /// The value is derived from dividing 180 by π.
     /// </remarks>
     public const double RadiansToDegrees = 180.0 / Math.PI;
 
@@ -62,30 +79,32 @@ public class Context(
         return y;
     }
 
-    /// <summary>
-    /// Convert a degrees value to radians
-    /// </summary>
-    /// <param name="degrees">The angle in degrees to convert to radians.</param>
-    /// <returns>The angle in radians equivalent to the input degrees.</returns>
-    public static double DegToRad(double degrees) => degrees * DegreesToRadians;
-
-    /// <summary>
-    /// Convert a radians value to degrees
-    /// </summary>
-    /// <param name="radians">The angle in radians to convert to degrees.</param>
-    /// <returns>The angle in degrees equivalent to the input radians.</returns>
-    public static double RadToDeg(double radians) => radians * RadiansToDegrees;
-
     #region Precession and ecliptic obliquity
 
-    private const double AS2R = DegreesToRadians / 3600.0;
+    /// <summary>
+    /// A double representing the mathematical constant π (pi) times 2.
+    /// </summary>
     private const double D2PI = Math.PI * 2.0;
-    private const double DCOR_EPS_JPL_TJD0 = 2437846.5;
+
+    /// <summary>
+    /// Number of data points for dcor_eps_jpl
+    /// </summary>
     private const int NDCOR_EPS_JPL = 51;
+
+    /// <summary>
+    /// Number of periodic terms and polynomial terms for pre_peps()
+    /// </summary>
     private const int NPER_PEPS = 10;
+
+    /// <summary>
+    /// Number of polynomial terms for pre_peps()
+    /// </summary>
     private const int NPOL_PEPS = 4;
 
-    private static readonly double[] dcor_eps_jpl = [
+    /// <summary>
+    /// Julian day for dcor_eps_jpl
+    /// </summary>
+    private static readonly double[] s_Dcor_eps_jpl = [
                 36.726, 36.627, 36.595, 36.578, 36.640, 36.659, 36.731, 36.765,
             36.662, 36.555, 36.335, 36.321, 36.354, 36.227, 36.289, 36.348, 36.257, 36.163,
             35.979, 35.896, 35.842, 35.825, 35.912, 35.950, 36.093, 36.191, 36.009, 35.943,
@@ -97,7 +116,7 @@ public class Context(
     /// <summary>
     /// for pre_peps(): periodics
     /// </summary>
-    private static readonly double[][] peper = [
+    private static readonly double[][] s_Peper = [
           [+409.90, +396.15, +537.22, +402.90, +417.15, +288.92, +4043.00, +306.00, +277.00, +203.00],
           [-6908.287473, -3198.706291, +1453.674527, -857.748557, +1173.231614, -156.981465, +371.836550, -216.619040, +193.691479, +11.891524],
           [+753.872780, -247.805823, +379.471484, -53.880558, -90.109153, -353.600190, -63.115353, -28.248187, +17.703387, +38.911307],
@@ -108,7 +127,7 @@ public class Context(
     /// <summary>
     /// for pre_peps(): polynomials
     /// </summary>
-    private static readonly double[][] pepol = [
+    private static readonly double[][] s_Pepol = [
           [+8134.017132, +84028.206305],
           [+5043.0520035, +0.3624445],
           [-0.00710733, -0.00004039],
@@ -132,25 +151,26 @@ public class Context(
         for (i = 0; i < nper; i++)
         {
             w = D2PI * t;
-            a = w / peper[0][i];
+            a = w / s_Peper[0][i];
             s = Math.Sin(a);
             c = Math.Cos(a);
-            p += (c * peper[1][i]) + (s * peper[3][i]);
-            q += (c * peper[2][i]) + (s * peper[4][i]);
+            p += (c * s_Peper[1][i]) + (s * s_Peper[3][i]);
+            q += (c * s_Peper[2][i]) + (s * s_Peper[4][i]);
         }
 
         // polynomial terms
         w = 1;
         for (i = 0; i < npol; i++)
         {
-            p += pepol[i][0] * w;
-            q += pepol[i][1] * w;
+            p += s_Pepol[i][0] * w;
+            q += s_Pepol[i][1] * w;
             w *= t;
         }
 
         // both to radians
-        p *= AS2R;
-        q *= AS2R;
+        p *= ArcSecondsToRadians;
+        q *= ArcSecondsToRadians;
+
         // return
         return new Tuple<double, double>(p, q);
     }
@@ -231,18 +251,18 @@ public class Context(
                 double dofs;
                 if (tofs < 0)
                 {
-                    dofs = dcor_eps_jpl[0];
+                    dofs = s_Dcor_eps_jpl[0];
                 }
                 else if (tofs >= NDCOR_EPS_JPL - 1)
                 {
-                    dofs = dcor_eps_jpl[NDCOR_EPS_JPL - 1];
+                    dofs = s_Dcor_eps_jpl[NDCOR_EPS_JPL - 1];
                 }
                 else
                 {
                     double t0 = (int)tofs;
                     double t1 = t0 + 1;
                     //dofs = dcor_eps_jpl[(int)t0];
-                    dofs = ((tofs - t0) * (dcor_eps_jpl[(int)t0] - dcor_eps_jpl[(int)t1])) + dcor_eps_jpl[(int)t0];
+                    dofs = ((tofs - t0) * (s_Dcor_eps_jpl[(int)t0] - s_Dcor_eps_jpl[(int)t1])) + s_Dcor_eps_jpl[(int)t0];
                 }
 
                 dofs /= 1000.0 * 3600.0;
