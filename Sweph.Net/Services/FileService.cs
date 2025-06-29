@@ -11,7 +11,7 @@ namespace Sweph.Net.Services;
 /// <summary>
 /// Provides file loading functionality for the Swiss Ephemeris library.
 /// </summary>
-internal sealed partial class FileService
+internal static partial class FileService
 {
     private const string AsteroidFileName = "seasnam.txt";
     private const string DeltaTFileName = "swe_deltat.txt";
