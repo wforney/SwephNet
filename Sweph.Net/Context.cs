@@ -13,54 +13,35 @@ public class Context(
     HouseContext houseContext,
     PlanetContext planetContext,
     IOptionsMonitor<SwephNetSettings> swephNetSettingsOptionsMonitor)
-    : IDisposable
 {
     /// <summary>
-    /// Value to convert Degrees to Radian
+    /// Represents the conversion factor used to convert degrees to radians.
     /// </summary>
-    public const double DegreesToRadians = 0.0174532925199433;
+    /// <remarks>
+    /// Multiply an angle in degrees by this constant to obtain the equivalent angle in radians. The
+    /// value is derived from dividing π by 180.
+    /// </remarks>
+    public const double DegreesToRadians = Math.PI / 180.0;
 
     /// <summary>
-    /// Value to convert Radian to Degrees
+    /// Represents the conversion factor used to convert radians to degrees.
     /// </summary>
-    public const double RadiansToDegrees = 57.2957795130823;
+    /// <remarks>
+    /// Multiply an angle in radians by this constant to obtain the equivalent angle in degrees. The
+    /// value is derived from dividing 180 by π. This is useful for converting angles in
+    /// trigonometric calculations or when working with angular measurements in different units.
+    /// </remarks>
+    public const double RadiansToDegrees = 180.0 / Math.PI;
 
     /// <summary>
-    /// J2000 +/- two centuries
+    /// Gets the <see cref="HouseContext"/> for accessing house calculations and data.
     /// </summary>
-    internal const double PrecessionIAU_1976_Centuries = 2.0;
+    public HouseContext Houses { get; } = houseContext;
 
     /// <summary>
-    /// J2000 +/- two centuries
+    /// Gets the <see cref="PlanetContext"/> for accessing planetary data and calculations.
     /// </summary>
-    internal const double PrecessionIAU_2000_Centuries = 2.0;
-
-    /// <summary>
-    /// J2000 +/- 75 centuries
-    /// </summary>
-    /// <remarks>we use P03 for whole ephemeris</remarks>
-    internal const double PrecessionIAU_2006_Centuries = 75.0;
-
-    private bool _disposed;
-
-    /// <summary>
-    /// Finalizes an instance of the <see cref="Context"/> class.
-    /// </summary>
-    ~Context()
-    {
-        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-        Dispose(disposing: false);
-    }
-
-    /// <summary>
-    /// HouseContext for accessing house calculations and data.
-    /// </summary>
-    public HouseContext HouseContext { get; } = houseContext;
-
-    /// <summary>
-    /// PlanetContext for accessing planetary data and calculations.
-    /// </summary>
-    public PlanetContext PlanetContext { get; } = planetContext;
+    public PlanetContext Planets { get; } = planetContext;
 
     /// <summary>
     /// Reduce x modulo 360 degrees
@@ -84,59 +65,33 @@ public class Context(
     /// <summary>
     /// Convert a degrees value to radians
     /// </summary>
-    public static double DegToRad(double x) => x * DegreesToRadians;
-
-    /// <inheritdoc/>
-    public void Dispose()
-    {
-        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
-    }
+    /// <param name="degrees">The angle in degrees to convert to radians.</param>
+    /// <returns>The angle in radians equivalent to the input degrees.</returns>
+    public static double DegToRad(double degrees) => degrees * DegreesToRadians;
 
     /// <summary>
-    /// Releases unmanaged and - optionally - managed resources.
+    /// Convert a radians value to degrees
     /// </summary>
-    /// <param name="disposing">
-    /// <c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only
-    /// unmanaged resources.
-    /// </param>
-    protected virtual void Dispose(bool disposing)
-    {
-        if (_disposed)
-        {
-            return;
-        }
-
-        if (disposing)
-        {
-            // dispose managed state (managed objects)
-        }
-
-        // free unmanaged resources (unmanaged objects) and override finalizer, set large fields to null
-        _disposed = true;
-    }
+    /// <param name="radians">The angle in radians to convert to degrees.</param>
+    /// <returns>The angle in degrees equivalent to the input radians.</returns>
+    public static double RadToDeg(double radians) => radians * RadiansToDegrees;
 
     #region Precession and ecliptic obliquity
 
-    private const double AS2R = (DegreesToRadians / 3600.0);
+    private const double AS2R = DegreesToRadians / 3600.0;
     private const double D2PI = Math.PI * 2.0;
-    private const double EPS0 = (84381.406 * AS2R);
-    private const int NPOL_PEPS = 4;
+    private const double DCOR_EPS_JPL_TJD0 = 2437846.5;
+    private const int NDCOR_EPS_JPL = 51;
     private const int NPER_PEPS = 10;
-    private const int NPOL_PECL = 4;
-    private const int NPER_PECL = 8;
-    private const int NPOL_PEQU = 4;
-    private const int NPER_PEQU = 14;
+    private const int NPOL_PEPS = 4;
 
-    /// <summary>
-    /// for pre_peps(): polynomials
-    /// </summary>
-    private static readonly double[][] pepol = [
-          [+8134.017132, +84028.206305],
-          [+5043.0520035, +0.3624445],
-          [-0.00710733, -0.00004039],
-          [+0.000000271, -0.000000110]
+    private static readonly double[] dcor_eps_jpl = [
+                36.726, 36.627, 36.595, 36.578, 36.640, 36.659, 36.731, 36.765,
+            36.662, 36.555, 36.335, 36.321, 36.354, 36.227, 36.289, 36.348, 36.257, 36.163,
+            35.979, 35.896, 35.842, 35.825, 35.912, 35.950, 36.093, 36.191, 36.009, 35.943,
+            35.875, 35.771, 35.788, 35.753, 35.822, 35.866, 35.771, 35.732, 35.543, 35.498,
+            35.449, 35.409, 35.497, 35.556, 35.672, 35.760, 35.596, 35.565, 35.510, 35.394,
+            35.385, 35.375, 35.415,
         ];
 
     /// <summary>
@@ -151,45 +106,13 @@ public class Context(
         ];
 
     /// <summary>
-    /// for pre_pecl(): polynomials
+    /// for pre_peps(): polynomials
     /// </summary>
-    private static readonly double[][] pqpol = [
-          [+5851.607687, -1600.886300],
-          [-0.1189000, +1.1689818],
-          [-0.00028913, -0.00000020],
-          [+0.000000101, -0.000000437],
-        ];
-
-    /// <summary>
-    /// for pre_pecl(): periodics
-    /// </summary>
-    private static readonly double[][] pqper = [
-          [708.15, 2309, 1620, 492.2, 1183, 622, 882, 547],
-          [-5486.751211, -17.127623, -617.517403, 413.44294, 78.614193, -180.732815, -87.676083, 46.140315],
-          [-684.66156, 2446.28388, 399.671049, -356.652376, -186.387003, -316.80007, 198.296701, 101.135679], /* typo in publication fixed */
-          [667.66673, -2354.886252, -428.152441, 376.202861, 184.778874, 335.321713, -185.138669, -120.97283],
-          [-5523.863691, -549.74745, -310.998056, 421.535876, -36.776172, -145.278396, -34.74445, 22.885731]
-        ];
-
-    /// <summary>
-    /// for pre_pequ(): polynomials
-    /// </summary>
-    private static readonly double[][] xypol = [
-          [+5453.282155, -73750.930350],
-          [+0.4252841, -0.7675452],
-          [-0.00037173, -0.00018725],
-          [-0.000000152, +0.000000231],
-        ];
-
-    /// <summary>
-    /// for pre_pequ(): periodics
-    /// </summary>
-    private static readonly double[][] xyper = [
-          [256.75, 708.15, 274.2, 241.45, 2309, 492.2, 396.1, 288.9, 231.1, 1610, 620, 157.87, 220.3, 1200],
-          [-819.940624, -8444.676815, 2600.009459, 2755.17563, -167.659835, 871.855056, 44.769698, -512.313065, -819.415595, -538.071099, -189.793622, -402.922932, 179.516345, -9.814756],
-          [75004.344875, 624.033993, 1251.136893, -1102.212834, -2660.66498, 699.291817, 153.16722, -950.865637, 499.754645, -145.18821, 558.116553, -23.923029, -165.405086, 9.344131],
-          [81491.287984, 787.163481, 1251.296102, -1257.950837, -2966.79973, 639.744522, 131.600209, -445.040117, 584.522874, -89.756563, 524.42963, -13.549067, -210.157124, -44.919798],
-          [1558.515853, 7774.939698, -2219.534038, -2523.969396, 247.850422, -846.485643, -1393.124055, 368.526116, 749.045012, 444.704518, 235.934465, 374.049623, -171.33018, -22.899655],
+    private static readonly double[][] pepol = [
+          [+8134.017132, +84028.206305],
+          [+5043.0520035, +0.3624445],
+          [-0.00710733, -0.00004039],
+          [+0.000000271, -0.000000110]
         ];
 
     /// <summary>
@@ -212,8 +135,8 @@ public class Context(
             a = w / peper[0][i];
             s = Math.Sin(a);
             c = Math.Cos(a);
-            p += c * peper[1][i] + s * peper[3][i];
-            q += c * peper[2][i] + s * peper[4][i];
+            p += (c * peper[1][i]) + (s * peper[3][i]);
+            q += (c * peper[2][i]) + (s * peper[4][i]);
         }
 
         // polynomial terms
@@ -232,120 +155,104 @@ public class Context(
         return new Tuple<double, double>(p, q);
     }
 
-    private const double OFFSET_EPS_JPLHORIZONS = 35.95;
-    private const double DCOR_EPS_JPL_TJD0 = 2437846.5;
-    private const int NDCOR_EPS_JPL = 51;
-    private static readonly double[] dcor_eps_jpl = [
-            36.726, 36.627, 36.595, 36.578, 36.640, 36.659, 36.731, 36.765,
-            36.662, 36.555, 36.335, 36.321, 36.354, 36.227, 36.289, 36.348, 36.257, 36.163,
-            35.979, 35.896, 35.842, 35.825, 35.912, 35.950, 36.093, 36.191, 36.009, 35.943,
-            35.875, 35.771, 35.788, 35.753, 35.822, 35.866, 35.771, 35.732, 35.543, 35.498,
-            35.449, 35.409, 35.497, 35.556, 35.672, 35.760, 35.596, 35.565, 35.510, 35.394,
-            35.385, 35.375, 35.415,
-        ];
-
     /// <summary>
     /// Obliquity of the ecliptic at Julian date jd
     /// </summary>
     /// <remarks>
-    /// IAU Coefficients are from:
-    /// J. H. Lieske, T. Lederle, W. Fricke, and B. Morando,
-    /// "Expressions for the Precession Quantities Based upon the IAU
-    /// (1976) System of Astronomical Constants,"  Astronomy and Astrophysics
-    /// 58, 1-16 (1977).
+    /// IAU Coefficients are from: J. H. Lieske, T. Lederle, W. Fricke, and B. Morando, "Expressions
+    /// for the Precession Quantities Based upon the IAU (1976) System of Astronomical Constants,"
+    /// Astronomy and Astrophysics 58, 1-16 (1977).
     ///
-    /// Before or after 200 years from J2000, the formula used is from:
-    /// J. Laskar, "Secular terms of classical planetary theories
-    /// using the results of general theory," Astronomy and Astrophysics
-    /// 157, 59070 (1986).
+    /// Before or after 200 years from J2000, the formula used is from: J. Laskar, "Secular terms of
+    /// classical planetary theories using the results of general theory," Astronomy and
+    /// Astrophysics 157, 59070 (1986).
     ///
-    /// Bretagnon, P. et al.: 2003, "Expressions for Precession Consistent with
-    /// the IAU 2000A Model". A&amp;A 400,785
-    /// B03  	84381.4088  	-46.836051*t  	-1667*10-7*t2  	+199911*10-8*t3  	-523*10-9*t4  	-248*10-10*t5  	-3*10-11*t6
-    /// C03   84381.406  	-46.836769*t  	-1831*10-7*t2  	+20034*10-7*t3  	-576*10-9*t4  	-434*10-10*t5
+    /// Bretagnon, P. et al.: 2003, "Expressions for Precession Consistent with the IAU 2000A
+    /// Model". A&amp;A 400,785 B03 84381.4088 -46.836051*t -1667*10-7*t2 +199911*10-8*t3
+    /// -523*10-9*t4 -248*10-10*t5 -3*10-11*t6 C03 84381.406 -46.836769*t -1831*10-7*t2
+    /// +20034*10-7*t3 -576*10-9*t4 -434*10-10*t5
     ///
     /// See precess and page B18 of the Astronomical Almanac.
     /// </remarks>
     internal double Epsiln(double jd, JPL.JplHorizonMode horizons)
     {
-        var options = swephNetSettingsOptionsMonitor.CurrentValue;
+        SwephNetSettings options = swephNetSettingsOptionsMonitor.CurrentValue;
         double T = (jd - 2451545.0) / 36525.0;
         double eps;
         if ((horizons & JPL.JplHorizonMode.JplHorizons) != 0 && options.IncludeCodeForDpsiDepsIAU1980)
         {
-            eps = (((1.813e-3 * T - 5.9e-4) * T - 46.8150) * T + 84381.448) * DegreesToRadians / 3600;
+            eps = ((((((1.813e-3 * T) - 5.9e-4) * T) - 46.8150) * T) + 84381.448) * DegreesToRadians / 3600;
         }
         else if ((horizons & JPL.JplHorizonMode.JplApproximate) != 0 && !options.ApproximateHorizonsAstrodienst)
         {
-            eps = (((1.813e-3 * T - 5.9e-4) * T - 46.8150) * T + 84381.448) * DegreesToRadians / 3600;
+            eps = ((((((1.813e-3 * T) - 5.9e-4) * T) - 46.8150) * T) + 84381.448) * DegreesToRadians / 3600;
         }
-        else if (options.UsePrecessionIAU == PrecessionIAU.IAU_1976 && Math.Abs(T) <= PrecessionIAU_1976_Centuries)
+        else if (options.UsePrecessionIAU == PrecessionIAU.IAU_1976 && Math.Abs(T) <= JulianDay.PrecessionIAU_1976_Centuries)
         {
-            eps = (((1.813e-3 * T - 5.9e-4) * T - 46.8150) * T + 84381.448) * DegreesToRadians / 3600;
+            eps = ((((((1.813e-3 * T) - 5.9e-4) * T) - 46.8150) * T) + 84381.448) * DegreesToRadians / 3600;
         }
-        else if (options.UsePrecessionIAU == PrecessionIAU.IAU_2000 && Math.Abs(T) <= PrecessionIAU_2000_Centuries)
+        else if (options.UsePrecessionIAU == PrecessionIAU.IAU_2000 && Math.Abs(T) <= JulianDay.PrecessionIAU_2000_Centuries)
         {
-            eps = (((1.813e-3 * T - 5.9e-4) * T - 46.84024) * T + 84381.406) * DegreesToRadians / 3600;
+            eps = ((((((1.813e-3 * T) - 5.9e-4) * T) - 46.84024) * T) + 84381.406) * DegreesToRadians / 3600;
         }
-        else if (options.UsePrecessionIAU == PrecessionIAU.IAU_2006 && Math.Abs(T) <= PrecessionIAU_2006_Centuries)
+        else if (options.UsePrecessionIAU == PrecessionIAU.IAU_2006 && Math.Abs(T) <= JulianDay.PrecessionIAU_2006_Centuries)
         {
-            eps = (((((-4.34e-8 * T - 5.76e-7) * T + 2.0034e-3) * T - 1.831e-4) * T - 46.836769) * T + 84381.406) * DegreesToRadians / 3600.0;
+            eps = ((((((((((-4.34e-8 * T) - 5.76e-7) * T) + 2.0034e-3) * T) - 1.831e-4) * T) - 46.836769) * T) + 84381.406) * DegreesToRadians / 3600.0;
         }
         else if (options.UsePrecessionCoefficient == PrecessionCoefficients.Bretagnon2003)
         {
-            eps = ((((((-3e-11 * T - 2.48e-8) * T - 5.23e-7) * T + 1.99911e-3) * T - 1.667e-4) * T - 46.836051) * T + 84381.40880) * DegreesToRadians / 3600.0;
+            eps = ((((((((((((-3e-11 * T) - 2.48e-8) * T) - 5.23e-7) * T) + 1.99911e-3) * T) - 1.667e-4) * T) - 46.836051) * T) + 84381.40880) * DegreesToRadians / 3600.0;
         }
         else if (options.UsePrecessionCoefficient == PrecessionCoefficients.Simon1994)
         {
-            eps = (((((2.5e-8 * T - 5.1e-7) * T + 1.9989e-3) * T - 1.52e-4) * T - 46.80927) * T + 84381.412) * DegreesToRadians / 3600.0;
+            eps = ((((((((((2.5e-8 * T) - 5.1e-7) * T) + 1.9989e-3) * T) - 1.52e-4) * T) - 46.80927) * T) + 84381.412) * DegreesToRadians / 3600.0;
         }
         else if (options.UsePrecessionCoefficient == PrecessionCoefficients.Williams1994)
         {
-            eps = ((((-1.0e-6 * T + 2.0e-3) * T - 1.74e-4) * T - 46.833960) * T + 84381.409) * DegreesToRadians / 3600.0;/* */
+            eps = ((((((((-1.0e-6 * T) + 2.0e-3) * T) - 1.74e-4) * T) - 46.833960) * T) + 84381.409) * DegreesToRadians / 3600.0;/* */
         }
         else if (options.UsePrecessionCoefficient == PrecessionCoefficients.Laskar1986)
         {
             T /= 10.0;
-            eps = (((((((((2.45e-10 * T + 5.79e-9) * T + 2.787e-7) * T
-            + 7.12e-7) * T - 3.905e-5) * T - 2.4967e-3) * T
-            - 5.138e-3) * T + 1.99925) * T - 0.0155) * T - 468.093) * T
+            eps = (((((((((((((((((((2.45e-10 * T) + 5.79e-9) * T) + 2.787e-7) * T)
+            + 7.12e-7) * T) - 3.905e-5) * T) - 2.4967e-3) * T)
+            - 5.138e-3) * T) + 1.99925) * T) - 0.0155) * T) - 468.093) * T)
             + 84381.448;
             eps *= DegreesToRadians / 3600.0;
         }
         else
         {
             // Vondrak2011
-            var tup = LdpPeps(jd);
+            Tuple<double, double> tup = LdpPeps(jd);
             eps = tup.Item2;
             if ((horizons & JPL.JplHorizonMode.JplApproximate) != 0 && !options.ApproximateHorizonsAstrodienst)
             {
                 double tofs = (jd - DCOR_EPS_JPL_TJD0) / 365.25;
-                double dofs = OFFSET_EPS_JPLHORIZONS;
+                double dofs;
                 if (tofs < 0)
                 {
-                    tofs = 0;
                     dofs = dcor_eps_jpl[0];
                 }
                 else if (tofs >= NDCOR_EPS_JPL - 1)
                 {
-                    tofs = NDCOR_EPS_JPL;
                     dofs = dcor_eps_jpl[NDCOR_EPS_JPL - 1];
                 }
                 else
                 {
                     double t0 = (int)tofs;
                     double t1 = t0 + 1;
-                    dofs = dcor_eps_jpl[(int)t0];
-                    dofs = (tofs - t0) * (dcor_eps_jpl[(int)t0] - dcor_eps_jpl[(int)t1]) + dcor_eps_jpl[(int)t0];
+                    //dofs = dcor_eps_jpl[(int)t0];
+                    dofs = ((tofs - t0) * (dcor_eps_jpl[(int)t0] - dcor_eps_jpl[(int)t1])) + dcor_eps_jpl[(int)t0];
                 }
-                dofs /= (1000.0 * 3600.0);
+
+                dofs /= 1000.0 * 3600.0;
                 eps += dofs * DegreesToRadians;
             }
         }
         return eps;
     }
 
-    #endregion
+    #endregion Precession and ecliptic obliquity
 
     #region Nutation in longitude and obliquity
 
@@ -392,5 +299,5 @@ public class Context(
     //    return result;
     //}
 
-    #endregion
+    #endregion Nutation in longitude and obliquity
 }
