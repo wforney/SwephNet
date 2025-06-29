@@ -117,6 +117,9 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="Asteroid_NameNotFound" xml:space="preserve">
+    <value>{0}: nom inconnu</value>
+  </data>
   <data name="Dependency_Error_CantFindConstructor" xml:space="preserve">
     <value>Constructeur pour le type '{0}' introuvable.</value>
   </data>
@@ -128,81 +131,6 @@
   </data>
   <data name="Dependency_Error_CantResolveType" xml:space="preserve">
     <value>Impossible de resoudre le type '{0}'.</value>
-  </data>
-  <data name="PlanetName_Moon" xml:space="preserve">
-    <value>Lune</value>
-  </data>
-  <data name="PlanetName_Sun" xml:space="preserve">
-    <value>Soleil</value>
-  </data>
-  <data name="PlanetName_Mercury" xml:space="preserve">
-    <value>Mercure</value>
-  </data>
-  <data name="PlanetName_Venus" xml:space="preserve">
-    <value>Vénus</value>
-  </data>
-  <data name="PlanetName_Mars" xml:space="preserve">
-    <value>Mars</value>
-  </data>
-  <data name="PlanetName_Jupiter" xml:space="preserve">
-    <value>Jupiter</value>
-  </data>
-  <data name="PlanetName_Saturn" xml:space="preserve">
-    <value>Saturne</value>
-  </data>
-  <data name="PlanetName_Uranus" xml:space="preserve">
-    <value>Uranus</value>
-  </data>
-  <data name="PlanetName_Neptune" xml:space="preserve">
-    <value>Neptune</value>
-  </data>
-  <data name="PlanetName_Pluto" xml:space="preserve">
-    <value>Pluton</value>
-  </data>
-  <data name="PlanetName_MeanNode" xml:space="preserve">
-    <value>mean Node</value>
-  </data>
-  <data name="PlanetName_TrueNode" xml:space="preserve">
-    <value>true Node</value>
-  </data>
-  <data name="PlanetName_MeanApogee" xml:space="preserve">
-    <value>mean Apogée</value>
-  </data>
-  <data name="PlanetName_OscuApogee" xml:space="preserve">
-    <value>osc. Apogée</value>
-  </data>
-  <data name="PlanetName_IntpApogee" xml:space="preserve">
-    <value>intp. Apogée</value>
-  </data>
-  <data name="PlanetName_IntpPerigee" xml:space="preserve">
-    <value>intp. Périgée</value>
-  </data>
-  <data name="PlanetName_Earth" xml:space="preserve">
-    <value>Terre</value>
-  </data>
-  <data name="PlanetName_Ceres" xml:space="preserve">
-    <value>Céres</value>
-  </data>
-  <data name="PlanetName_Pallas" xml:space="preserve">
-    <value>Pallas</value>
-  </data>
-  <data name="PlanetName_Juno" xml:space="preserve">
-    <value>Juno</value>
-  </data>
-  <data name="PlanetName_Vesta" xml:space="preserve">
-    <value>Vesta</value>
-  </data>
-  <data name="PlanetName_Chiron" xml:space="preserve">
-    <value>Chiron</value>
-  </data>
-  <data name="PlanetName_Pholus" xml:space="preserve">
-    <value>Pholus</value>
-  </data>
-  <data name="Asteroid_NameNotFound" xml:space="preserve">
-    <value>{0}: nom inconnu</value>
-  </data>
-  <data name="Fictitious_NameNotFound" xml:space="preserve">
-    <value>Nom inconnu</value>
   </data>
   <data name="Error_ReadingFile" xml:space="preserve">
     <value>Erreur lors de la lecture du fichier {0}, ligne {1} : {2}</value>
@@ -284,5 +212,80 @@
   </data>
   <data name="Fictitious_ErrorSemiAxisValueInvalid" xml:space="preserve">
     <value>valeur de semi-axe incorrecte</value>
+  </data>
+  <data name="Fictitious_NameNotFound" xml:space="preserve">
+    <value>Nom inconnu</value>
+  </data>
+  <data name="PlanetName_Ceres" xml:space="preserve">
+    <value>Céres</value>
+  </data>
+  <data name="PlanetName_Chiron" xml:space="preserve">
+    <value>Chiron</value>
+  </data>
+  <data name="PlanetName_Earth" xml:space="preserve">
+    <value>Terre</value>
+  </data>
+  <data name="PlanetName_IntpApogee" xml:space="preserve">
+    <value>intp. Apogée</value>
+  </data>
+  <data name="PlanetName_IntpPerigee" xml:space="preserve">
+    <value>intp. Périgée</value>
+  </data>
+  <data name="PlanetName_Juno" xml:space="preserve">
+    <value>Juno</value>
+  </data>
+  <data name="PlanetName_Jupiter" xml:space="preserve">
+    <value>Jupiter</value>
+  </data>
+  <data name="PlanetName_Mars" xml:space="preserve">
+    <value>Mars</value>
+  </data>
+  <data name="PlanetName_MeanApogee" xml:space="preserve">
+    <value>mean Apogée</value>
+  </data>
+  <data name="PlanetName_MeanNode" xml:space="preserve">
+    <value>mean Node</value>
+  </data>
+  <data name="PlanetName_Mercury" xml:space="preserve">
+    <value>Mercure</value>
+  </data>
+  <data name="PlanetName_Moon" xml:space="preserve">
+    <value>Lune</value>
+  </data>
+  <data name="PlanetName_Neptune" xml:space="preserve">
+    <value>Neptune</value>
+  </data>
+  <data name="PlanetName_OscuApogee" xml:space="preserve">
+    <value>osc. Apogée</value>
+  </data>
+  <data name="PlanetName_Pallas" xml:space="preserve">
+    <value>Pallas</value>
+  </data>
+  <data name="PlanetName_Pholus" xml:space="preserve">
+    <value>Pholus</value>
+  </data>
+  <data name="PlanetName_Pluto" xml:space="preserve">
+    <value>Pluton</value>
+  </data>
+  <data name="PlanetName_Saturn" xml:space="preserve">
+    <value>Saturne</value>
+  </data>
+  <data name="PlanetName_Sun" xml:space="preserve">
+    <value>Soleil</value>
+  </data>
+  <data name="PlanetName_TrueNode" xml:space="preserve">
+    <value>true Node</value>
+  </data>
+  <data name="PlanetName_Uranus" xml:space="preserve">
+    <value>Uranus</value>
+  </data>
+  <data name="PlanetName_Venus" xml:space="preserve">
+    <value>Vénus</value>
+  </data>
+  <data name="PlanetName_Vesta" xml:space="preserve">
+    <value>Vesta</value>
+  </data>
+  <data name="Planet_NameNotFound" xml:space="preserve">
+    <value>Nom introuvable</value>
   </data>
 </root>

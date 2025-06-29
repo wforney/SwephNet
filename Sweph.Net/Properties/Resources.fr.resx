@@ -118,22 +118,22 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="Asteroid_NameNotFound" xml:space="preserve">
-    <value>{0}: pas trouvé</value>
+    <value>{0}: nom inconnu</value>
   </data>
   <data name="Dependency_Error_CantFindConstructor" xml:space="preserve">
-    <value>Impossible de trouver un constructeur pour type '{0}'</value>
+    <value>Constructeur pour le type '{0}' introuvable.</value>
   </data>
   <data name="Dependency_Error_CantInstanciateType" xml:space="preserve">
-    <value>'{0}' ne peut pas être instancié</value>
+    <value>Impossible d'instancier '{0}'.</value>
   </data>
   <data name="Dependency_Error_CantResolveParameterForConstruct" xml:space="preserve">
-    <value>Impossible de résoudre le paramètre '{0}' de type '{1}' pour la construction '{2}'</value>
+    <value>Impossible de résoudre le paramètre '{0}' du type '{1}' pour construire '{2}'</value>
   </data>
   <data name="Dependency_Error_CantResolveType" xml:space="preserve">
-    <value>Impossible de résoudre type '{0}'</value>
+    <value>Impossible de resoudre le type '{0}'.</value>
   </data>
   <data name="Error_ReadingFile" xml:space="preserve">
-    <value>Erreur dans le fichier {0}, ligne {1}: {2}</value>
+    <value>Erreur lors de la lecture du fichier {0}, ligne {1} : {2}</value>
   </data>
   <data name="FictitiousName_Adams" xml:space="preserve">
     <value>Adams</value>
@@ -148,7 +148,7 @@
     <value>Cupido</value>
   </data>
   <data name="FictitiousName_Hades" xml:space="preserve">
-    <value>Enfers</value>
+    <value>Hades</value>
   </data>
   <data name="FictitiousName_Harrington" xml:space="preserve">
     <value>Harrington</value>
@@ -160,7 +160,7 @@
     <value>Kronos</value>
   </data>
   <data name="FictitiousName_Leverrier" xml:space="preserve">
-    <value>Levier</value>
+    <value>Leverrier</value>
   </data>
   <data name="FictitiousName_Lowell" xml:space="preserve">
     <value>Lowell</value>
@@ -169,7 +169,7 @@
     <value>Nibiru</value>
   </data>
   <data name="FictitiousName_Pickering" xml:space="preserve">
-    <value>Camion</value>
+    <value>Pickering</value>
   </data>
   <data name="FictitiousName_Poseidon" xml:space="preserve">
     <value>Poseidon</value>
@@ -181,43 +181,43 @@
     <value>Zeus</value>
   </data>
   <data name="Fictitious_ErrorEccentricityValueInvalid" xml:space="preserve">
-    <value>Excentricité non valide (pas d'orbites paraboliques ou hyperboliques autorisées)</value>
+    <value>excentricité non valide (aucune orbite parabolique ou hyperbolique autorisées)</value>
   </data>
   <data name="Fictitious_ErrorElementsNotFound" xml:space="preserve">
-    <value>Éléments pour la planète {1} introuvable</value>
+    <value>impossible de trouver les éléments pour la planète {1}</value>
   </data>
   <data name="Fictitious_ErrorInclinationValueInvalid" xml:space="preserve">
-    <value>Valeur d'inclinaison non valide</value>
+    <value>valeur d'inclinaison invalide</value>
   </data>
   <data name="Fictitious_ErrorInvalidEpoch" xml:space="preserve">
-    <value>époque non valide</value>
+    <value>epoch invalide</value>
   </data>
   <data name="Fictitious_ErrorInvalidEquinox" xml:space="preserve">
-    <value>équinoxe non valide</value>
+    <value>équinoxe invalide</value>
   </data>
   <data name="Fictitious_ErrorMeanAnomalyValueInvalid" xml:space="preserve">
-    <value>Valeur d'anomalie moyenne invalide</value>
+    <value>valeur Mean Anomaly incorrecte</value>
   </data>
   <data name="Fictitious_ErrorNineElementsRequired" xml:space="preserve">
-    <value>Neuf éléments requis</value>
+    <value>neuf éléments sont requis.</value>
   </data>
   <data name="Fictitious_ErrorNodeValueInvalid" xml:space="preserve">
-    <value>valeur de nœud non valide</value>
+    <value>valeur de noeud invalide</value>
   </data>
   <data name="Fictitious_ErrorNoElements" xml:space="preserve">
-    <value>Erreur pas d'éléments pour le corps fictif non {0}</value>
+    <value>Erreur pas d'élément pour l'astre  n° {0}</value>
   </data>
   <data name="Fictitious_ErrorPerihelionArgumentValueInvalid" xml:space="preserve">
-    <value>Valeur d'argument de périhélion invalide</value>
+    <value>valeur d'argument de périhélie non valide</value>
   </data>
   <data name="Fictitious_ErrorSemiAxisValueInvalid" xml:space="preserve">
-    <value>valeur semi-axe non valide</value>
+    <value>valeur de semi-axe incorrecte</value>
   </data>
   <data name="Fictitious_NameNotFound" xml:space="preserve">
-    <value>Nom introuvable</value>
+    <value>Nom inconnu</value>
   </data>
   <data name="PlanetName_Ceres" xml:space="preserve">
-    <value>Ceron</value>
+    <value>Céres</value>
   </data>
   <data name="PlanetName_Chiron" xml:space="preserve">
     <value>Chiron</value>
@@ -226,10 +226,10 @@
     <value>Terre</value>
   </data>
   <data name="PlanetName_IntpApogee" xml:space="preserve">
-    <value>INTP. Apogée</value>
+    <value>intp. Apogée</value>
   </data>
   <data name="PlanetName_IntpPerigee" xml:space="preserve">
-    <value>INTP. Périgée</value>
+    <value>intp. Périgée</value>
   </data>
   <data name="PlanetName_Juno" xml:space="preserve">
     <value>Juno</value>
@@ -241,10 +241,10 @@
     <value>Mars</value>
   </data>
   <data name="PlanetName_MeanApogee" xml:space="preserve">
-    <value>apogée signifie</value>
+    <value>mean Apogée</value>
   </data>
   <data name="PlanetName_MeanNode" xml:space="preserve">
-    <value>nœud moyen</value>
+    <value>mean Node</value>
   </data>
   <data name="PlanetName_Mercury" xml:space="preserve">
     <value>Mercure</value>
@@ -256,13 +256,13 @@
     <value>Neptune</value>
   </data>
   <data name="PlanetName_OscuApogee" xml:space="preserve">
-    <value>Osc. Apogée</value>
+    <value>osc. Apogée</value>
   </data>
   <data name="PlanetName_Pallas" xml:space="preserve">
     <value>Pallas</value>
   </data>
   <data name="PlanetName_Pholus" xml:space="preserve">
-    <value>Pholume</value>
+    <value>Pholus</value>
   </data>
   <data name="PlanetName_Pluto" xml:space="preserve">
     <value>Pluton</value>
@@ -274,7 +274,7 @@
     <value>Soleil</value>
   </data>
   <data name="PlanetName_TrueNode" xml:space="preserve">
-    <value>Vrai nœud</value>
+    <value>true Node</value>
   </data>
   <data name="PlanetName_Uranus" xml:space="preserve">
     <value>Uranus</value>
