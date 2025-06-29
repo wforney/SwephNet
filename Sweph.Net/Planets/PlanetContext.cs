@@ -8,11 +8,29 @@ using System.Text;
 namespace Sweph.Net.Planets;
 
 /// <summary>
-/// PlanetContext is a class that manages the names and properties of planets, asteroids, and fictitious bodies.
+/// PlanetContext is a class that manages the names and properties of planets, asteroids, and
+/// fictitious bodies.
 /// </summary>
 public partial class PlanetContext(ILogger<PlanetContext> logger)
 {
-    private Dictionary<int, string> _bufferNames = [];
+    private static readonly string[] PlanetFictitiousNames =
+        [
+        "Cupido",
+        "Hades",
+        "Zeus",
+        "Kronos",
+        "Apollon",
+        "Admetos",
+        "Vulkanus",
+        "Poseidon",
+        "Isis-Transpluto",
+        "Nibiru",
+        "Harrington",
+        "Leverrier",
+        "Adams",
+        "Lowell",
+        "Pickering"
+        ];
 
     // Suffixes planets locales names
     private static readonly string[] PlanetNames =
@@ -42,28 +60,11 @@ public partial class PlanetContext(ILogger<PlanetContext> logger)
         "IntpPerigee"
         ];
 
-    private static readonly string[] PlanetFictitiousNames =
-        [
-        "Cupido",
-        "Hades",
-        "Zeus",
-        "Kronos",
-        "Apollon",
-        "Admetos",
-        "Vulkanus",
-        "Poseidon",
-        "Isis-Transpluto",
-        "Nibiru",
-        "Harrington",
-        "Leverrier",
-        "Adams",
-        "Lowell",
-        "Pickering"
-        ];
+    private readonly Dictionary<int, string> _bufferNames = [];
 
     #region Osculating elements
 
-    private static double[][] plan_oscu_elem_neely = [
+    private static readonly double[][] _planetOsculatingElementsNeely = [
           [JulianDay.J1900, JulianDay.J1900, 163.7409, 40.99837, 0.00460, 171.4333, 129.8325, 1.0833],/* Cupido Neely */
           [JulianDay.J1900, JulianDay.J1900,  27.6496, 50.66744, 0.00245, 148.1796, 161.3339, 1.0500],/* Hades Neely */
           [JulianDay.J1900, JulianDay.J1900, 165.1232, 59.21436, 0.00120, 299.0440,   0.0000, 0.0000],/* Zeus Neely */
@@ -93,7 +94,7 @@ public partial class PlanetContext(ILogger<PlanetContext> logger)
           [2425977.5, 2425977.5, 48.95, 55.1, 0.31, 280.1, 100, 15], /**/
         ];
 
-    private static double[][] plan_oscu_elem_no_neely = [
+    private static readonly double[][] _planetOsculatingElementsNoNeely = [
           [JulianDay.J1900, JulianDay.J1900, 104.5959, 40.99837,  0, 0, 0, 0], /* Cupido   */
           [JulianDay.J1900, JulianDay.J1900, 337.4517, 50.667443, 0, 0, 0, 0], /* Hades    */
           [JulianDay.J1900, JulianDay.J1900, 104.0904, 59.214362, 0, 0, 0, 0], /* Zeus     */
@@ -123,17 +124,13 @@ public partial class PlanetContext(ILogger<PlanetContext> logger)
           [2425977.5, 2425977.5, 48.95, 55.1, 0.31, 280.1, 100, 15], /**/
         ];
 
-    private double[][] plan_oscu_elem { get { return UseNeely ? plan_oscu_elem_neely : plan_oscu_elem_no_neely; } }
+    private double[][] _planetOsculatingElements => UseNeely ? _planetOsculatingElementsNeely : _planetOsculatingElementsNoNeely;
 
     /// <summary>
     /// Read an osculating element for a planet and a julian day
     /// </summary>
-    /// <param name="idPlanet">
-    /// Id of the planet for which the osculating element is requested.
-    /// </param>
-    /// <param name="jd">
-    /// Julian day for which the osculating element is requested.
-    /// </param>
+    /// <param name="idPlanet">Id of the planet for which the osculating element is requested.</param>
+    /// <param name="jd">Julian day for which the osculating element is requested.</param>
     /// <param name="fictitiousPlanetFile">
     /// If the planet is fictitious, this parameter is used to specify the fictitious planet file.
     /// </param>
@@ -142,110 +139,54 @@ public partial class PlanetContext(ILogger<PlanetContext> logger)
     /// </returns>
     protected async Task<(OsculatingElement? result, int? fict_ifl)> ReadElementAsync(int idPlanet, double jd, int fictitiousPlanetFile)
     {
-        OsculatingElement? result;
-        int? fict_iflo;
-        (result, fict_iflo) = await FileService.FindElementAsync(idPlanet, jd, fictitiousPlanetFile).ConfigureAwait(false);
-
-        // If file or planet not found, use built-in bodies
-        if (result is null)
-        {
-            var planOscu = plan_oscu_elem;
-            if (idPlanet >= planOscu.Length)
-            {
-                throw new SwephNetException(Resources.Fictitious_ErrorNoElements, idPlanet);
-            }
-
-            var plan = planOscu[idPlanet];
-            result = new OsculatingElement()
-            {
-                Epoch = plan[0],
-                Equinox = plan[1],
-                MeanAnomaly = plan[2] * Context.DegreesToRadians,
-                SemiAxis = plan[3],
-                Eccentricity = plan[4],
-                Perihelion = plan[5] * Context.DegreesToRadians,
-                AscendingNode = plan[6] * Context.DegreesToRadians,
-                Inclination = plan[7] * Context.DegreesToRadians,
-                Name = Resources.ResourceManager.GetString(
-                    string.Format(CultureInfo.CurrentCulture, "FictitiousName_{0}", PlanetFictitiousNames[idPlanet]), CultureInfo.CurrentCulture)
-                    ?? throw new ArgumentNullException(nameof(OsculatingElement.Name))
-            };
-        }
-
-        return (result, fict_iflo);
-    }
-
-    #endregion
-
-    /// <summary>
-    /// Returns the name of a fictitious planet
-    /// </summary>
-    /// <param name="id">Id of the fictitious planet. 0 is the first fictitious id.</param>
-    /// <returns>Name of the fictitious planet</returns>
-    protected async Task<string> GetFictitiousNameAsync(int id)
-    {
         try
         {
-            int iDummy = 0;
-            var (result, fict_ifl) = await ReadElementAsync(id, 0, iDummy).ConfigureAwait(false);
-            if (result is not null)
+            OsculatingElement? result;
+            int? fict_iflo;
+            (result, fict_iflo) = await FileService.FindElementAsync(idPlanet, jd, fictitiousPlanetFile).ConfigureAwait(false);
+
+            // If file or planet not found, use built-in bodies
+            if (result is null)
             {
-                return result.Value.Name;
+                double[][] planOscu = _planetOsculatingElements;
+                if (idPlanet >= planOscu.Length)
+                {
+                    throw new SwephNetException(Resources.Fictitious_ErrorNoElements, idPlanet);
+                }
+
+                double[] plan = planOscu[idPlanet];
+                result = new OsculatingElement()
+                {
+                    Epoch = plan[0],
+                    Equinox = plan[1],
+                    MeanAnomaly = plan[2] * Context.DegreesToRadians,
+                    SemiAxis = plan[3],
+                    Eccentricity = plan[4],
+                    Perihelion = plan[5] * Context.DegreesToRadians,
+                    AscendingNode = plan[6] * Context.DegreesToRadians,
+                    Inclination = plan[7] * Context.DegreesToRadians,
+                    Name = Resources.ResourceManager.GetString(
+                        string.Format(CultureInfo.CurrentCulture, "FictitiousName_{0}", PlanetFictitiousNames[idPlanet]), CultureInfo.CurrentCulture)
+                        ?? throw new ArgumentNullException(nameof(fictitiousPlanetFile), $"{nameof(OsculatingElement.Name)} cannot be null"),
+                };
             }
+
+            return (result, fict_iflo);
         }
         catch (Exception ex)
         {
-            LogFictitiousNameNotFound(logger, id, ex);
+            throw new SwephNetException(
+                ex.Message,
+                ex);
         }
-        return Resources.Fictitious_NameNotFound;
     }
 
-    [LoggerMessage(
-        EventId = 1001,
-        Level = LogLevel.Error,
-        Message = "Fictitious name not found for id {id}")]
-    private static partial void LogFictitiousNameNotFound(ILogger logger, int id, Exception? exception);
+    #endregion Osculating elements
 
     /// <summary>
-    /// Returns the name of an asteroid
+    /// Use James Neely's revised elements of Uranian planets
     /// </summary>
-    /// <param name="asteroid">Id of the asteroid. 0 is the first asteroid id</param>
-    /// <returns>Name of the asteroid</returns>
-    protected static async Task<string> GetAsteroidNameAsync(int asteroid)
-    {
-        // TODO Check to implement this from a future 'File Data' ?????
-        ///* if name is already available */
-        //if (ipl == swed.fidat[SEI_FILE_ANY_AST].ipl[0])
-        //    s = swed.fidat[SEI_FILE_ANY_AST].astnam;
-        ///* else try to get it from ephemeris file */
-        //else {
-        //    var retc = sweph(J2000, ipl, SEI_FILE_ANY_AST, 0, null, NO_SAVE, xp, ref sdummy);
-        //    if (retc != ERR && retc != NOT_AVAILABLE)
-        //        s = swed.fidat[SEI_FILE_ANY_AST].astnam;
-        //    else
-        //        s = C.sprintf("%d: not found", ipl - SE_AST_OFFSET);
-        var format = CompositeFormat.Parse(Resources.Asteroid_NameNotFound);
-        string result = string.Format(CultureInfo.CurrentCulture, format, asteroid);
-        //}
-
-        // If there is a provisional designation only in ephemeris file,
-        // we look for a name in seasnam.txt, which can be updated by
-        // the user.
-        // Some old ephemeris files return a '?' in the first position.
-        // There are still a couple of unnamed bodies that got their
-        // provisional designation before 1925, when the current method
-        // of provisional designations was introduced. They have an 'A'
-        // as the first character, e.g. A924 RC.
-
-        // If name not found
-        if (string.IsNullOrWhiteSpace(result) || "?0123456789".Contains(result[0].ToString(), StringComparison.Ordinal) || (result.Length > 1 && char.IsDigit(result[1])))
-        {
-            // Try to read from asteroid names file
-            result = (await FileService.FindAsteroidNameAsync(asteroid).ConfigureAwait(false)) ?? result;
-        }
-
-        return result;
-    }
+    public bool UseNeely { get; set; } = true;
 
     /// <summary>
     /// Returns the name of planet <paramref name="id"/>
@@ -312,13 +253,11 @@ public partial class PlanetContext(ILogger<PlanetContext> logger)
             {
                 result = await GetFictitiousNameAsync(id - Planet.FirstFictitious).ConfigureAwait(false);
             }
-            else if (id.IsAsteroid)
-            {
-                result = await GetAsteroidNameAsync(id - Planet.FirstAsteroid).ConfigureAwait(false);
-            }
             else
-            {    // If not found return the id
-                result = id.Id.ToString(CultureInfo.InvariantCulture);
+            {
+                result = id.IsAsteroid
+                    ? await GetAsteroidNameAsync(id - Planet.FirstAsteroid).ConfigureAwait(false)
+                    : id.Id.ToString(CultureInfo.InvariantCulture);
             }
         }
 
@@ -333,8 +272,70 @@ public partial class PlanetContext(ILogger<PlanetContext> logger)
     }
 
     /// <summary>
-    /// Use James Neely's revised elements of Uranian planets
+    /// Returns the name of an asteroid
     /// </summary>
-    public bool UseNeely { get; set; } = true;
+    /// <param name="asteroid">Id of the asteroid. 0 is the first asteroid id</param>
+    /// <returns>Name of the asteroid</returns>
+    protected static async Task<string> GetAsteroidNameAsync(int asteroid)
+    {
+        // TODO Check to implement this from a future 'File Data' ?????
+        ////* if name is already available */
+        //if (ipl == swed.fidat[SEI_FILE_ANY_AST].ipl[0])
+        //    s = swed.fidat[SEI_FILE_ANY_AST].astnam;
+        ////* else try to get it from ephemeris file */
+        //else {
+        //    var retc = sweph(J2000, ipl, SEI_FILE_ANY_AST, 0, null, NO_SAVE, xp, ref sdummy);
+        //    if (retc != ERR && retc != NOT_AVAILABLE)
+        //        s = swed.fidat[SEI_FILE_ANY_AST].astnam;
+        //    else
+        //        s = C.sprintf("%d: not found", ipl - SE_AST_OFFSET);
+        CompositeFormat format = CompositeFormat.Parse(Resources.Asteroid_NameNotFound);
+        string result = string.Format(CultureInfo.CurrentCulture, format, asteroid);
+        //}
 
+        // If there is a provisional designation only in ephemeris file, we look for a name in
+        // seasnam.txt, which can be updated by the user. Some old ephemeris files return a '?' in
+        // the first position. There are still a couple of unnamed bodies that got their provisional
+        // designation before 1925, when the current method of provisional designations was
+        // introduced. They have an 'A' as the first character, e.g. A924 RC.
+
+        // If name not found
+        if (string.IsNullOrWhiteSpace(result) || "?0123456789".Contains(result[0].ToString(), StringComparison.Ordinal) || (result.Length > 1 && char.IsDigit(result[1])))
+        {
+            // Try to read from asteroid names file
+            result = (await FileService.FindAsteroidNameAsync(asteroid).ConfigureAwait(false)) ?? result;
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Returns the name of a fictitious planet
+    /// </summary>
+    /// <param name="id">Id of the fictitious planet. 0 is the first fictitious id.</param>
+    /// <returns>Name of the fictitious planet</returns>
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "We want to handle all exceptions.")]
+    protected async Task<string> GetFictitiousNameAsync(int id)
+    {
+        try
+        {
+            int iDummy = 0;
+            (OsculatingElement? result, int? fict_ifl) = await ReadElementAsync(id, 0, iDummy).ConfigureAwait(false);
+            if (result is not null)
+            {
+                return result.Value.Name;
+            }
+        }
+        catch (Exception ex)
+        {
+            LogFictitiousNameNotFound(logger, id, ex);
+        }
+        return Resources.Fictitious_NameNotFound;
+    }
+
+    [LoggerMessage(
+        EventId = 1001,
+        Level = LogLevel.Error,
+        Message = "Fictitious name not found for id {id}")]
+    private static partial void LogFictitiousNameNotFound(ILogger logger, int id, Exception? exception);
 }
