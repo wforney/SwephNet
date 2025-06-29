@@ -3,6 +3,7 @@
 /// <summary>
 /// IAU precession 1976 or 2003 for recent centuries.
 /// </summary>
+[SuppressMessage("Naming", "CA1707:Identifiers should not contain underscores", Justification = "Already shipped.")]
 public enum PrecessionIAU
 {
     /// <summary>

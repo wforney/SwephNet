@@ -11,7 +11,7 @@ namespace Sweph.Net.Services;
 /// <summary>
 /// Provides file loading functionality for the Swiss Ephemeris library.
 /// </summary>
-internal partial class FileService : IFileService
+public partial class FileService : IFileService
 {
     private const string AsteroidFileName = "seasnam.txt";
     private const string DeltaTFileName = "swe_deltat.txt";
@@ -105,13 +105,13 @@ internal partial class FileService : IFileService
     }
 
     /// <inheritdoc/>
-    public async Task<(OsculatingElement? OsculatingElement, int? fict_ifl)> FindElementAsync(int idPlanet, double julianDay, int fict_ifl, CancellationToken cancellationToken = default)
+    public async Task<(OsculatingElement? OsculatingElement, int? fict_ifl)> FindElementAsync(int idPlanet, double julianDay, int fictIfl, CancellationToken cancellationToken = default)
     {
         var lines = File.ReadLinesAsync(FictitiousFileName, Encoding.UTF8, cancellationToken);
         if (!await lines.AnyAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
         {
             // If the file is empty or does not exist, return null
-            return (null, fict_ifl);
+            return (null, fictIfl);
         }
 
         OsculatingElement? result = null;
@@ -252,7 +252,7 @@ internal partial class FileService : IFileService
                 parts[9] = parts[9].ToUpperInvariant();
                 if (parts[9].Contains("GEO", StringComparison.OrdinalIgnoreCase))
                 {
-                    fict_ifl |= FictitiousGeo;
+                    fictIfl |= FictitiousGeo;
                 }
             }
 
@@ -282,7 +282,7 @@ internal partial class FileService : IFileService
                 string.Format(CultureInfo.CurrentCulture, format, idPlanet));
         }
 
-        return (result, fict_ifl);
+        return (result, fictIfl);
     }
 
     [GeneratedRegex(@"^[\s\(\{\[]*(\d+)[\s\)\}\]]*(.+)$")]

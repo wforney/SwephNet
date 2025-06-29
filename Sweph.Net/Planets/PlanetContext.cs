@@ -11,7 +11,7 @@ namespace Sweph.Net.Planets;
 /// PlanetContext is a class that manages the names and properties of planets, asteroids, and
 /// fictitious bodies.
 /// </summary>
-public partial class PlanetContext(ILogger<PlanetContext> logger)
+public partial class PlanetContext(IFileService fileService, ILogger<PlanetContext> logger)
 {
     private static readonly string[] PlanetFictitiousNames =
         [
@@ -64,7 +64,7 @@ public partial class PlanetContext(ILogger<PlanetContext> logger)
 
     #region Osculating elements
 
-    private static readonly double[][] _planetOsculatingElementsNeely = [
+    private static readonly double[][] PlanetOsculatingElementsNeely = [
           [JulianDay.J1900, JulianDay.J1900, 163.7409, 40.99837, 0.00460, 171.4333, 129.8325, 1.0833],/* Cupido Neely */
           [JulianDay.J1900, JulianDay.J1900,  27.6496, 50.66744, 0.00245, 148.1796, 161.3339, 1.0500],/* Hades Neely */
           [JulianDay.J1900, JulianDay.J1900, 165.1232, 59.21436, 0.00120, 299.0440,   0.0000, 0.0000],/* Zeus Neely */
@@ -82,7 +82,7 @@ public partial class PlanetContext(ILogger<PlanetContext> logger)
           /* Nibiru, elements from Christian Woeltge, Hannover */
           [1856113.380954, 1856113.380954, 0.0, 234.8921, 0.981092, 103.966, -44.567, 158.708],
           /* Harrington, elements from Astronomical Journal 96(4), Oct. 1988 */
-          new double[] {2374696.5, JulianDay.J2000, 0.0, 101.2, 0.411, 208.5, 275.4, 32.4},
+          [2374696.5, JulianDay.J2000, 0.0, 101.2, 0.411, 208.5, 275.4, 32.4],
           /* Leverrier's Neptune,
             according to W.G. Hoyt, "Planets X and Pluto", Tucson 1980, p. 63 */
           [2395662.5, 2395662.5, 34.05, 36.15, 0.10761, 284.75, 0, 0],
@@ -94,7 +94,7 @@ public partial class PlanetContext(ILogger<PlanetContext> logger)
           [2425977.5, 2425977.5, 48.95, 55.1, 0.31, 280.1, 100, 15], /**/
         ];
 
-    private static readonly double[][] _planetOsculatingElementsNoNeely = [
+    private static readonly double[][] PlanetOsculatingElementsNoNeely = [
           [JulianDay.J1900, JulianDay.J1900, 104.5959, 40.99837,  0, 0, 0, 0], /* Cupido   */
           [JulianDay.J1900, JulianDay.J1900, 337.4517, 50.667443, 0, 0, 0, 0], /* Hades    */
           [JulianDay.J1900, JulianDay.J1900, 104.0904, 59.214362, 0, 0, 0, 0], /* Zeus     */
@@ -112,7 +112,7 @@ public partial class PlanetContext(ILogger<PlanetContext> logger)
           /* Nibiru, elements from Christian Woeltge, Hannover */
           [1856113.380954, 1856113.380954, 0.0, 234.8921, 0.981092, 103.966, -44.567, 158.708],
           /* Harrington, elements from Astronomical Journal 96(4), Oct. 1988 */
-          new double[] {2374696.5, JulianDay.J2000, 0.0, 101.2, 0.411, 208.5, 275.4, 32.4},
+          [2374696.5, JulianDay.J2000, 0.0, 101.2, 0.411, 208.5, 275.4, 32.4],
           /* Leverrier's Neptune,
             according to W.G. Hoyt, "Planets X and Pluto", Tucson 1980, p. 63 */
           [2395662.5, 2395662.5, 34.05, 36.15, 0.10761, 284.75, 0, 0],
@@ -124,7 +124,7 @@ public partial class PlanetContext(ILogger<PlanetContext> logger)
           [2425977.5, 2425977.5, 48.95, 55.1, 0.31, 280.1, 100, 15], /**/
         ];
 
-    private double[][] _planetOsculatingElements => UseNeely ? _planetOsculatingElementsNeely : _planetOsculatingElementsNoNeely;
+    private double[][] PlanetOsculatingElements => UseNeely ? PlanetOsculatingElementsNeely : PlanetOsculatingElementsNoNeely;
 
     /// <summary>
     /// Read an osculating element for a planet and a julian day
@@ -143,12 +143,12 @@ public partial class PlanetContext(ILogger<PlanetContext> logger)
         {
             OsculatingElement? result;
             int? fict_iflo;
-            (result, fict_iflo) = await FileService.FindElementAsync(idPlanet, jd, fictitiousPlanetFile).ConfigureAwait(false);
+            (result, fict_iflo) = await fileService.FindElementAsync(idPlanet, jd, fictitiousPlanetFile).ConfigureAwait(false);
 
             // If file or planet not found, use built-in bodies
             if (result is null)
             {
-                double[][] planOscu = _planetOsculatingElements;
+                double[][] planOscu = PlanetOsculatingElements;
                 if (idPlanet >= planOscu.Length)
                 {
                     throw new SwephNetException(Resources.Fictitious_ErrorNoElements, idPlanet);
@@ -238,28 +238,18 @@ public partial class PlanetContext(ILogger<PlanetContext> logger)
         }
 
         // Planets names
-        if (id >= 0 && id <= Planet.LastPlanet)
-        {
-            result = Resources.ResourceManager.GetString(
+        result = id >= 0 && id <= Planet.LastPlanet
+            ? Resources.ResourceManager.GetString(
                 string.Format(
                     CultureInfo.CurrentCulture,
                     "PlanetName_{0}",
                     PlanetNames[id]),
-                CultureInfo.CurrentCulture);
-        }
-        else
-        {
-            if (id.IsFictitious)
-            {
-                result = await GetFictitiousNameAsync(id - Planet.FirstFictitious).ConfigureAwait(false);
-            }
-            else
-            {
-                result = id.IsAsteroid
+                CultureInfo.CurrentCulture)
+            : id.IsFictitious
+                ? await GetFictitiousNameAsync(id - Planet.FirstFictitious).ConfigureAwait(false)
+                : id.IsAsteroid
                     ? await GetAsteroidNameAsync(id - Planet.FirstAsteroid).ConfigureAwait(false)
                     : id.Id.ToString(CultureInfo.InvariantCulture);
-            }
-        }
 
         // Save the result in the buffer
         if (string.IsNullOrWhiteSpace(result))
@@ -276,7 +266,7 @@ public partial class PlanetContext(ILogger<PlanetContext> logger)
     /// </summary>
     /// <param name="asteroid">Id of the asteroid. 0 is the first asteroid id</param>
     /// <returns>Name of the asteroid</returns>
-    protected static async Task<string> GetAsteroidNameAsync(int asteroid)
+    protected async Task<string> GetAsteroidNameAsync(int asteroid)
     {
         // TODO Check to implement this from a future 'File Data' ?????
         ////* if name is already available */
@@ -303,7 +293,7 @@ public partial class PlanetContext(ILogger<PlanetContext> logger)
         if (string.IsNullOrWhiteSpace(result) || "?0123456789".Contains(result[0].ToString(), StringComparison.Ordinal) || (result.Length > 1 && char.IsDigit(result[1])))
         {
             // Try to read from asteroid names file
-            result = (await FileService.FindAsteroidNameAsync(asteroid).ConfigureAwait(false)) ?? result;
+            result = (await fileService.FindAsteroidNameAsync(asteroid).ConfigureAwait(false)) ?? result;
         }
 
         return result;

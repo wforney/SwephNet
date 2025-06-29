@@ -6,7 +6,10 @@ namespace Sweph.Net.Chronology;
 /// <summary>
 /// Holds the Delta T values for Julian Day calculations.
 /// </summary>
-public class JulianDayDeltaT
+/// <param name="fileService">
+/// The file service used to read Delta T values from an external file.
+/// </param>
+public class JulianDayDeltaT(IFileService fileService)
 {
     private const int EndDT2 = 1600;
 
@@ -80,7 +83,7 @@ public class JulianDayDeltaT
     /// <summary>
     /// The Delta T table from 1620.
     /// </summary>
-    private static double[] TableDT =
+    private static double[] s_tableDT =
         [
         /* 1620.0 thru 1659.0 */
         124.00, 119.00, 115.00, 110.00, 106.00, 102.00, 98.00, 95.00, 91.00, 88.00,
@@ -162,13 +165,12 @@ public class JulianDayDeltaT
     /// Lunar or planetary theory.
     /// </para>
     /// </summary>
-    public double AdjustForTidacc(double ans, double Y)
+    public double AdjustForTidacc(double ans, double y)
     {
-        double B;
-        if (Y < 1955.0)
+        if (y < 1955.0)
         {
-            B = Y - 1955.0;
-            ans += -0.000091 * (TidalAcceleration + 26.0) * B * B;
+            double b = y - 1955.0;
+            ans += -0.000091 * (TidalAcceleration + 26.0) * b * b;
         }
 
         return ans;
@@ -209,10 +211,10 @@ public class JulianDayDeltaT
             {
                 // between 1600 and 1620: linear interpolation between end of table dt2 and start of
                 // table dt
-                int B = StartDT - EndDT2;
+                int b = StartDT - EndDT2;
                 int iy = (EndDT2 - StartDT2) / StepDT2;
-                double dd = (asY - EndDT2) / B;
-                double ans = TableDT2[iy] + dd * (TableDT[0] - TableDT2[iy]);
+                double dd = (asY - EndDT2) / b;
+                double ans = TableDT2[iy] + dd * (s_tableDT[0] - TableDT2[iy]);
                 ans = AdjustForTidacc(ans, asYGreg);
                 return ans / 86400.0;
             }
@@ -232,8 +234,8 @@ public class JulianDayDeltaT
     /// <returns>The adjusted Delta T value in seconds.</returns>
     protected static double DeltatLongtermMorrisonStephenson(double tjd)
     {
-        double Ygreg = 2000.0 + (tjd - JulianDay.J2000) / 365.2425;
-        double u = (Ygreg - 1820) / 100.0;
+        double ygreg = 2000.0 + (tjd - JulianDay.J2000) / 365.2425;
+        double u = (ygreg - 1820) / 100.0;
         return -20 + 32 * u * u;
     }
 
@@ -248,23 +250,23 @@ public class JulianDayDeltaT
     protected async Task<double> DeltaTAAAsync(double tjd, CancellationToken cancellationToken = default)
     {
         double ans2, ans3;
-        double p, B, B2, Y, dd;
+        double p, b, b2, y, dd;
         double[] d = new double[6];
         int i, iy, k;
         int tabsiz = await InitializeAsync(cancellationToken).ConfigureAwait(false);
         int tabend = StartDT + tabsiz - 1;
 
         // Y = 2000.0 + (tjd - J2000)/365.25;
-        Y = 2000.0 + (tjd - JulianDay.J2000) / 365.2425;
+        y = 2000.0 + (tjd - JulianDay.J2000) / 365.2425;
         double ans;
-        if (Y <= tabend)
+        if (y <= tabend)
         {
             // Index into the table.
-            p = Math.Floor(Y);
+            p = Math.Floor(y);
             iy = (int)(p - StartDT);
 
             // Zeroth order estimate is value at start of year
-            ans = TableDT[iy];
+            ans = s_tableDT[iy];
             k = iy + 1;
             if (k >= tabsiz)
             {
@@ -272,10 +274,10 @@ public class JulianDayDeltaT
             }
 
             // The fraction of tabulation interval
-            p = Y - p;
+            p = y - p;
 
             // First order interpolated value
-            ans += p * (TableDT[k] - TableDT[iy]);
+            ans += p * (s_tableDT[k] - s_tableDT[iy]);
             if (iy - 1 < 0 || iy + 2 >= tabsiz)
             {
                 goto done; // can't do second differences
@@ -285,7 +287,7 @@ public class JulianDayDeltaT
             k = iy - 2;
             for (i = 0; i < 5; i++)
             {
-                d[i] = k < 0 || k + 1 >= tabsiz ? 0 : TableDT[k + 1] - TableDT[k];
+                d[i] = k < 0 || k + 1 >= tabsiz ? 0 : s_tableDT[k + 1] - s_tableDT[k];
 
                 k += 1;
             }
@@ -296,8 +298,8 @@ public class JulianDayDeltaT
                 d[i] = d[i + 1] - d[i];
             }
 
-            B = 0.25 * p * (p - 1.0);
-            ans += B * (d[1] + d[2]);
+            b = 0.25 * p * (p - 1.0);
+            ans += b * (d[1] + d[2]);
             if (iy + 2 >= tabsiz)
             {
                 goto done;
@@ -309,8 +311,8 @@ public class JulianDayDeltaT
                 d[i] = d[i + 1] - d[i];
             }
 
-            B = 2.0 * B / 3.0;
-            ans += (p - 0.5) * B * d[1];
+            b = 2.0 * b / 3.0;
+            ans += (p - 0.5) * b * d[1];
             if (iy - 2 < 0 || iy + 3 > tabsiz)
             {
                 goto done;
@@ -322,26 +324,26 @@ public class JulianDayDeltaT
                 d[i] = d[i + 1] - d[i];
             }
 
-            B = 0.125 * B * (p + 1.0) * (p - 2.0);
-            ans += B * (d[0] + d[1]);
+            b = 0.125 * b * (p + 1.0) * (p - 2.0);
+            ans += b * (d[0] + d[1]);
         done:
-            ans = AdjustForTidacc(ans, Y);
+            ans = AdjustForTidacc(ans, y);
             return ans / 86400.0;
         }
 
         // today - : Formula Stephenson (1997; p. 507), with modification to avoid jump at end of AA
         // table, similar to what Meeus 1998 had suggested. Slow transition within 100 years.
-        B = 0.01 * (Y - 1820);
-        ans = -20 + 31 * B * B;
+        b = 0.01 * (y - 1820);
+        ans = -20 + 31 * b * b;
 
         // slow transition from tabulated values to Stephenson formula:
-        if (Y <= tabend + 100)
+        if (y <= tabend + 100)
         {
-            B2 = 0.01 * (tabend - 1820);
-            ans2 = -20 + 31 * B2 * B2;
-            ans3 = TableDT[tabsiz - 1];
+            b2 = 0.01 * (tabend - 1820);
+            ans2 = -20 + 31 * b2 * b2;
+            ans3 = s_tableDT[tabsiz - 1];
             dd = ans2 - ans3;
-            ans += dd * (Y - (tabend + 100)) * 0.01;
+            ans += dd * (y - (tabend + 100)) * 0.01;
         }
 
         return ans / 86400.0;
@@ -355,73 +357,73 @@ public class JulianDayDeltaT
     protected double DeltatEspenakMeeus1620(double tjd)
     {
         double ans = 0;
-        double Ygreg;
+        double ygreg;
         double u;
 
         //* double Y = 2000.0 + (tjd - J2000)/365.25;
-        Ygreg = 2000.0 + (tjd - JulianDay.J2000) / 365.2425;
-        if (Ygreg < -500)
+        ygreg = 2000.0 + (tjd - JulianDay.J2000) / 365.2425;
+        if (ygreg < -500)
         {
             ans = DeltatLongtermMorrisonStephenson(tjd);
         }
-        else if (Ygreg < 500)
+        else if (ygreg < 500)
         {
-            u = Ygreg / 100.0;
+            u = ygreg / 100.0;
             ans = (((((0.0090316521 * u + 0.022174192) * u - 0.1798452) * u - 5.952053) * u + 33.78311) * u - 1014.41) * u + 10583.6;
         }
-        else if (Ygreg < 1600)
+        else if (ygreg < 1600)
         {
-            u = (Ygreg - 1000) / 100.0;
+            u = (ygreg - 1000) / 100.0;
             ans = (((((0.0083572073 * u - 0.005050998) * u - 0.8503463) * u + 0.319781) * u + 71.23472) * u - 556.01) * u + 1574.2;
         }
         // TODO: Verify dead code
-        else if (Ygreg < 1700)
+        else if (ygreg < 1700)
         {
-            u = Ygreg - 1600;
+            u = ygreg - 1600;
             ans = 120 - 0.9808 * u - 0.01532 * u * u + u * u * u / 7129.0;
         }
-        else if (Ygreg < 1800)
+        else if (ygreg < 1800)
         {
-            u = Ygreg - 1700;
+            u = ygreg - 1700;
             ans = (((-u / 1174000.0 + 0.00013336) * u - 0.0059285) * u + 0.1603) * u + 8.83;
         }
-        else if (Ygreg < 1860)
+        else if (ygreg < 1860)
         {
-            u = Ygreg - 1800;
+            u = ygreg - 1800;
             ans = ((((((0.000000000875 * u - 0.0000001699) * u + 0.0000121272) * u - 0.00037436) * u + 0.0041116) * u + 0.0068612) * u - 0.332447) * u + 13.72;
         }
-        else if (Ygreg < 1900)
+        else if (ygreg < 1900)
         {
-            u = Ygreg - 1860;
+            u = ygreg - 1860;
             ans = ((((u / 233174.0 - 0.0004473624) * u + 0.01680668) * u - 0.251754) * u + 0.5737) * u + 7.62;
         }
-        else if (Ygreg < 1920)
+        else if (ygreg < 1920)
         {
-            u = Ygreg - 1900;
+            u = ygreg - 1900;
             ans = (((-0.000197 * u + 0.0061966) * u - 0.0598939) * u + 1.494119) * u - 2.79;
         }
-        else if (Ygreg < 1941)
+        else if (ygreg < 1941)
         {
-            u = Ygreg - 1920;
+            u = ygreg - 1920;
             ans = 21.20 + 0.84493 * u - 0.076100 * u * u + 0.0020936 * u * u * u;
         }
-        else if (Ygreg < 1961)
+        else if (ygreg < 1961)
         {
-            u = Ygreg - 1950;
+            u = ygreg - 1950;
             ans = 29.07 + 0.407 * u - u * u / 233.0 + u * u * u / 2547.0;
         }
-        else if (Ygreg < 1986)
+        else if (ygreg < 1986)
         {
-            u = Ygreg - 1975;
+            u = ygreg - 1975;
             ans = 45.45 + 1.067 * u - u * u / 260.0 - u * u * u / 718.0;
         }
-        else if (Ygreg < 2005)
+        else if (ygreg < 2005)
         {
-            u = Ygreg - 2000;
+            u = ygreg - 2000;
             ans = ((((0.00002373599 * u + 0.000651814) * u + 0.0017275) * u - 0.060374) * u + 0.3345) * u + 63.86;
         }
 
-        ans = AdjustForTidacc(ans, Ygreg);
+        ans = AdjustForTidacc(ans, ygreg);
         ans /= 86400.0;
         return ans;
     }
@@ -434,22 +436,22 @@ public class JulianDayDeltaT
     protected double DeltatMorrisonStephenson1600(double tjd)
     {
         double ans = 0, ans2, ans3;
-        double p, B, dd;
+        double p, b, dd;
         double tjd0;
         int iy;
-        double Y = 2000.0 + (tjd - JulianDay.J2000) / 365.2425;
+        double y = 2000.0 + (tjd - JulianDay.J2000) / 365.2425;
 
         // before -1000: formula by Stephenson&Morrison (2004; p. 335) but adjusted to fit the
         // starting point of table dt2.
-        if (Y < StartDT2)
+        if (y < StartDT2)
         {
             //B = (Y - LTERM_EQUATION_YSTART) * 0.01;
             //ans = -20 + LTERM_EQUATION_COEFF * B * B;
             ans = DeltatLongtermMorrisonStephenson(tjd);
-            ans = AdjustForTidacc(ans, Y);
+            ans = AdjustForTidacc(ans, y);
 
             // transition from formula to table over 100 years
-            if (Y >= StartDT2 - 100)
+            if (y >= StartDT2 - 100)
             {
                 //* starting value of table dt2:
                 ans2 = AdjustForTidacc(TableDT2[0], StartDT2);
@@ -458,27 +460,27 @@ public class JulianDayDeltaT
                 // 0.01; ans3 = -20 + LTERM_EQUATION_COEFF * B * B;
                 tjd0 = (StartDT2 - 2000) * 365.2425 + JulianDay.J2000;
                 ans3 = DeltatLongtermMorrisonStephenson(tjd0);
-                ans3 = AdjustForTidacc(ans3, Y);
+                ans3 = AdjustForTidacc(ans3, y);
                 dd = ans3 - ans2;
-                B = (Y - (StartDT2 - 100)) * 0.01;
+                b = (y - (StartDT2 - 100)) * 0.01;
 
                 // fit to starting point of table dt2.
-                ans -= dd * B;
+                ans -= dd * b;
             }
         }
 
         // between -1000 and 1600: linear interpolation between values of table dt2
         // (Stephenson&Morrison 2004)
-        if (Y is >= StartDT2 and < EndDT2)
+        if (y is >= StartDT2 and < EndDT2)
         {
-            double Yjul = 2000 + (tjd - 2451557.5) / 365.25;
-            p = Math.Floor(Yjul);
+            double yjul = 2000 + (tjd - 2451557.5) / 365.25;
+            p = Math.Floor(yjul);
             iy = (int)((p - StartDT2) / StepDT2);
-            dd = (Yjul - (StartDT2 + StepDT2 * iy)) / StepDT2;
+            dd = (yjul - (StartDT2 + StepDT2 * iy)) / StepDT2;
             ans = TableDT2[iy] + (TableDT2[iy + 1] - TableDT2[iy]) * dd;
 
             // correction for tidal acceleration used by our ephemeris
-            ans = AdjustForTidacc(ans, Y);
+            ans = AdjustForTidacc(ans, y);
         }
 
         ans /= 86400.0;
@@ -497,12 +499,12 @@ public class JulianDayDeltaT
     {
         if (_initialized)
         {
-            return TableDT.Length;
+            return s_tableDT.Length;
         }
 
         TidalAcceleration = DeltaT.TidalDefault;
 
-        DeltaT[] records = await FileService.GetDeltaTRecordsAsync(cancellationToken)
+        DeltaT[] records = await fileService.GetDeltaTRecordsAsync(cancellationToken)
             .Where(r => r.Year is >= StartDT and < 2050) // We limit the table to 2050
             .OrderBy(r => r.Year)
             .ToArrayAsync(cancellationToken: cancellationToken)
@@ -515,22 +517,22 @@ public class JulianDayDeltaT
             int newSize = lastYear - StartDT + 1;
 
             // Resize the table
-            if (newSize > TableDT.Length)
+            if (newSize > s_tableDT.Length)
             {
-                double[] dt = TableDT;
-                TableDT = new double[newSize];
-                Array.Copy(dt, 0, TableDT, 0, dt.Length);
+                double[] dt = s_tableDT;
+                s_tableDT = new double[newSize];
+                Array.Copy(dt, 0, s_tableDT, 0, dt.Length);
             }
 
             // Update the table
             foreach (DeltaT rec in records)
             {
                 int tabIndex = rec.Year - StartDT;
-                TableDT[tabIndex] = rec.Value;
+                s_tableDT[tabIndex] = rec.Value;
             }
         }
 
         _initialized = true;
-        return TableDT.Length;
+        return s_tableDT.Length;
     }
 }

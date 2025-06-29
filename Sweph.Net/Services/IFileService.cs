@@ -3,7 +3,10 @@ using Sweph.Net.Planets;
 
 namespace Sweph.Net.Services;
 
-internal interface IFileService
+/// <summary>
+/// Defines a contract for a file service that provides methods to find asteroid names,
+/// </summary>
+public interface IFileService
 {
     /// <summary>
     /// Finds the name of the asteroid with the specified identifier as an asynchronous operation.
@@ -23,7 +26,7 @@ internal interface IFileService
     /// </summary>
     /// <param name="idPlanet">The identifier planet.</param>
     /// <param name="julianDay">The julian day.</param>
-    /// <param name="fict_ifl">Fictitious ifl value.</param>
+    /// <param name="fictIfl">Fictitious ifl value.</param>
     /// <param name="cancellationToken">
     /// The cancellation token that can be used by other objects or threads to receive notice of cancellation.
     /// </param>
@@ -32,7 +35,7 @@ internal interface IFileService
     /// operation, containing the osculating element and fictitious ifl value.
     /// </returns>
     /// <exception cref="SwephNetException"></exception>
-    Task<(OsculatingElement? OsculatingElement, int? fict_ifl)> FindElementAsync(int idPlanet, double julianDay, int fict_ifl, CancellationToken cancellationToken = default);
+    Task<(OsculatingElement? OsculatingElement, int? fict_ifl)> FindElementAsync(int idPlanet, double julianDay, int fictIfl, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Get <see cref="DeltaT"/> records as an asynchronous operation.

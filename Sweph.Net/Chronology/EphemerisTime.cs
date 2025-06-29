@@ -15,9 +15,14 @@ public readonly record struct EphemerisTime(JulianDay JulianDay, double DeltaT)
     /// Initializes a new instance of the <see cref="EphemerisTime"/> struct.
     /// </summary>
     /// <param name="julianDay">The Julian day.</param>
-    public EphemerisTime(JulianDay julianDay)
-        : this(julianDay, new JulianDayDeltaT().DeltaTAsync(julianDay).ConfigureAwait(false).GetAwaiter().GetResult()) // TODO: use async/await properly
+    /// <param name="deltaT">
+    /// The DeltaT helper, which provides the DeltaT value for the given Julian Day.
+    /// </param>
+    public EphemerisTime(JulianDay julianDay, JulianDayDeltaT deltaT)
+        : this(julianDay, deltaT?.DeltaTAsync(julianDay).ConfigureAwait(false).GetAwaiter().GetResult()
+              ?? throw new ArgumentNullException(nameof(deltaT)))
     {
+        // TODO: use async/await properly
     }
 
     /// <summary>
